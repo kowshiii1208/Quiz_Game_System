@@ -6,7 +6,6 @@ import {
   Flame, 
   Sparkles, 
   ArrowRight, 
-  ShieldAlert, 
   Award, 
   Layers, 
   CheckCircle2, 
@@ -15,13 +14,17 @@ import {
   Zap, 
   Check, 
   Info,
-  QrCode
+  QrCode,
+  Code2,
+  Terminal,
+  Cpu
 } from 'lucide-react';
 
 export const StudentRegistration = ({ onRegisterStudent, availableQuestionsCount }) => {
   const [name, setName] = useState('');
   const [rollNumber, setRollNumber] = useState('');
   const [college, setCollege] = useState('Aditya University');
+  const [language, setLanguage] = useState('CPP'); // CPP, JAVA, PYTHON
   const [difficulty, setDifficulty] = useState('EASY');
   const [errors, setErrors] = useState({});
 
@@ -30,6 +33,36 @@ export const StudentRegistration = ({ onRegisterStudent, availableQuestionsCount
     'Aditya Engineering College (AEC)',
     'Aditya College of Engineering & Tech (ACET)',
     'Aditya College of Engineering (ACOE)'
+  ];
+
+  const languagesList = [
+    {
+      id: 'CPP',
+      name: 'C++',
+      subtitle: 'Object-Oriented & Systems Programming',
+      icon: Cpu,
+      color: 'from-blue-500 to-indigo-600',
+      badge: 'C++ 20 Standard',
+      border: 'border-blue-500/50 bg-blue-950/20 text-blue-300'
+    },
+    {
+      id: 'JAVA',
+      name: 'Java',
+      subtitle: 'Enterprise & JVM Architecture',
+      icon: Code2,
+      color: 'from-amber-500 to-orange-600',
+      badge: 'Java 21 LTS',
+      border: 'border-amber-500/50 bg-amber-950/20 text-amber-300'
+    },
+    {
+      id: 'PYTHON',
+      name: 'Python',
+      subtitle: 'Data Science & Core Algorithms',
+      icon: Terminal,
+      color: 'from-emerald-500 to-teal-600',
+      badge: 'Python 3.12',
+      border: 'border-emerald-500/50 bg-emerald-950/20 text-emerald-300'
+    }
   ];
 
   const handleStart = (e) => {
@@ -49,6 +82,7 @@ export const StudentRegistration = ({ onRegisterStudent, availableQuestionsCount
       name: name.trim(),
       rollNumber: rollNumber.trim().toUpperCase(),
       college: college.trim(),
+      language,
       difficulty
     });
   };
@@ -61,9 +95,8 @@ export const StudentRegistration = ({ onRegisterStudent, availableQuestionsCount
       activeBorder: 'border-emerald-500 ring-2 ring-emerald-500/30 bg-emerald-950/20',
       icon: ShieldCheck,
       iconColor: 'text-emerald-400',
-      target: 'Beginners & Syntax Practice',
-      topics: ['Classes & Objects', 'Member Vars', 'Constructors', 'Basic Syntax'],
-      desc: 'Fundamental OOP principles, basic class definitions, access modifiers, and object instantiation.'
+      topics: ['Syntax & Basics', 'Classes & Objects', 'Constructors', 'Variables'],
+      desc: 'Fundamental language principles, basic definitions, access modifiers, and object creation.'
     },
     {
       id: 'MEDIUM',
@@ -72,20 +105,18 @@ export const StudentRegistration = ({ onRegisterStudent, availableQuestionsCount
       activeBorder: 'border-amber-500 ring-2 ring-amber-500/30 bg-amber-950/20',
       icon: Flame,
       iconColor: 'text-amber-400',
-      target: 'Intermediate / Core Pillars',
-      topics: ['Polymorphism', 'Virtual Methods', 'Inheritance', 'Operator Overloading'],
-      desc: 'Dynamic binding, runtime polymorphism, copy constructors, operator overloading, and inheritance hierarchies.'
+      topics: ['Inheritance', 'Polymorphism', 'Overriding', 'Interfaces/Decorators'],
+      desc: 'Dynamic binding, runtime polymorphism, exception handling, and structural abstractions.'
     },
     {
       id: 'HARD',
-      title: 'Hard / Advanced C++',
+      title: 'Hard / Advanced Mastery',
       badgeColor: 'bg-rose-500/10 text-rose-400 border-rose-500/30',
       activeBorder: 'border-rose-500 ring-2 ring-rose-500/30 bg-rose-950/20',
       icon: Zap,
       iconColor: 'text-rose-400',
-      target: 'Advanced / Systems Engineer',
-      topics: ['Smart Pointers', 'Vtables', 'RAII Pattern', 'Exception Safety'],
-      desc: 'Virtual destructors, diamond inheritance problem, RAII memory management, custom allocators, and vtable internals.'
+      topics: ['Memory Internals', 'Generics/GIL/RAII', 'Concurrency', 'Advanced Design'],
+      desc: 'Deep runtime mechanics, memory management, concurrency models, and advanced language patterns.'
     },
     {
       id: 'MIXED',
@@ -94,13 +125,11 @@ export const StudentRegistration = ({ onRegisterStudent, availableQuestionsCount
       activeBorder: 'border-indigo-500 ring-2 ring-indigo-500/30 bg-indigo-950/20',
       icon: Award,
       iconColor: 'text-indigo-400',
-      target: 'Comprehensive Evaluation',
-      topics: ['Full OOP Spectrum', 'All Difficulty Levels', 'Merit Certificate Track'],
-      desc: 'A comprehensive, random distribution across all difficulty tiers for complete evaluation.'
+      topics: ['Full Language Spectrum', 'All Difficulty Levels', 'Merit Certificate Track'],
+      desc: 'A comprehensive evaluation across all difficulty tiers.'
     }
   ];
 
-  // Helper for live candidate initials
   const getInitials = (str) => {
     if (!str.trim()) return 'AU';
     const parts = str.trim().split(' ');
@@ -108,13 +137,13 @@ export const StudentRegistration = ({ onRegisterStudent, availableQuestionsCount
     return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
   };
 
+  const currentLangObj = languagesList.find(l => l.id === language);
+
   return (
     <div className="max-w-6xl mx-auto px-4 py-8 sm:py-12 space-y-10">
       
       {/* Hero Header & University Branding */}
       <div className="text-center space-y-3">
-        
-        {/* Top Tag Pill */}
         <div className="inline-flex items-center space-x-2 px-4 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/30 text-indigo-300 text-xs font-bold uppercase tracking-wider">
           <Sparkles className="w-4 h-4 text-indigo-400 animate-pulse" />
           <span>ADITYA UNIVERSITY • CSE EXAMINATION PORTAL</span>
@@ -125,7 +154,7 @@ export const StudentRegistration = ({ onRegisterStudent, availableQuestionsCount
         </h1>
 
         <p className="text-slate-400 max-w-xl mx-auto text-sm leading-relaxed">
-          Enter your details below to proceed to the examination guidelines.
+          Select your evaluation programming language and difficulty level to proceed.
         </p>
 
         {/* Feature Highlights Ribbon */}
@@ -140,10 +169,9 @@ export const StudentRegistration = ({ onRegisterStudent, availableQuestionsCount
           </div>
           <div className="flex items-center space-x-1.5 bg-slate-900/80 px-3 py-1.5 rounded-full border border-slate-800">
             <BookOpen className="w-4 h-4 text-indigo-400" />
-            <span>Instant Results</span>
+            <span>Instant Verification</span>
           </div>
         </div>
-
       </div>
 
       {/* Main Registration Grid */}
@@ -155,9 +183,9 @@ export const StudentRegistration = ({ onRegisterStudent, availableQuestionsCount
           <div className="border-b border-slate-800/80 pb-4">
             <h2 className="text-lg font-bold text-white flex items-center space-x-2">
               <User className="w-5 h-5 text-indigo-400" />
-              <span>1. Profile Information</span>
+              <span>1. Candidate Profile Information</span>
             </h2>
-            <p className="text-xs text-slate-400">Details will be printed on your certificate</p>
+            <p className="text-xs text-slate-400">Information will be printed on your official certificate</p>
           </div>
 
           {/* Input: Candidate Name */}
@@ -184,7 +212,7 @@ export const StudentRegistration = ({ onRegisterStudent, availableQuestionsCount
             <label className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center justify-between">
               <span className="flex items-center space-x-1.5">
                 <Hash className="w-4 h-4 text-indigo-400" />
-                <span>Roll Number *</span>
+                <span>Roll Number / Registration ID *</span>
               </span>
               {rollNumber.trim() && <span className="text-[11px] text-emerald-400 font-normal flex items-center"><Check className="w-3 h-3 mr-0.5" /> Validated</span>}
             </label>
@@ -213,7 +241,6 @@ export const StudentRegistration = ({ onRegisterStudent, availableQuestionsCount
             />
             {errors.college && <p className="text-xs text-rose-400 font-medium">{errors.college}</p>}
 
-            {/* Quick Preset Buttons */}
             <div className="flex flex-wrap gap-1.5 pt-1">
               {collegePresets.map((preset) => (
                 <button
@@ -232,22 +259,68 @@ export const StudentRegistration = ({ onRegisterStudent, availableQuestionsCount
             </div>
           </div>
 
-          {/* Step 2: Quiz Difficulty Selection */}
+          {/* Step 2: Language Selection Track */}
+          <div className="pt-4 border-t border-slate-800/80 space-y-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-bold text-white flex items-center space-x-2">
+                  <Code2 className="w-5 h-5 text-indigo-400" />
+                  <span>2. Select Programming Language</span>
+                </h3>
+                <p className="text-xs text-slate-400">Choose test subject track</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-3 gap-3">
+              {languagesList.map((lang) => {
+                const Icon = lang.icon;
+                const isSelected = language === lang.id;
+                return (
+                  <button
+                    key={lang.id}
+                    type="button"
+                    onClick={() => setLanguage(lang.id)}
+                    className={`p-3.5 rounded-2xl border text-left transition-all duration-200 flex flex-col justify-between ${
+                      isSelected
+                        ? `${lang.border} ring-2 ring-indigo-500/40 shadow-lg scale-[1.02]`
+                        : 'glass-card border-slate-800 text-slate-400 hover:border-slate-700 hover:text-slate-200'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between w-full mb-2">
+                      <div className={`p-2 rounded-xl bg-gradient-to-br ${lang.color} text-white shadow-md`}>
+                        <Icon className="w-5 h-5" />
+                      </div>
+                      {isSelected && (
+                        <div className="w-4 h-4 rounded-full bg-indigo-500 text-white flex items-center justify-center text-[10px]">
+                          ✓
+                        </div>
+                      )}
+                    </div>
+                    <div>
+                      <h4 className="font-extrabold text-white text-sm">{lang.name}</h4>
+                      <p className="text-[10px] text-slate-400 line-clamp-1">{lang.badge}</p>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Step 3: Quiz Difficulty Selection */}
           <div className="pt-4 border-t border-slate-800/80 space-y-4">
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-lg font-bold text-white flex items-center space-x-2">
                   <Layers className="w-5 h-5 text-indigo-400" />
-                  <span>2. Difficulty Level</span>
+                  <span>3. Difficulty Level</span>
                 </h3>
-                <p className="text-xs text-slate-400">Select difficulty track</p>
+                <p className="text-xs text-slate-400">Select difficulty tier</p>
               </div>
               <span className="text-xs font-bold text-amber-400 bg-amber-500/10 border border-amber-500/30 px-3 py-1 rounded-full">
-                {availableQuestionsCount} Questions
+                {availableQuestionsCount} Questions Available
               </span>
             </div>
 
-            {/* Level Cards Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
               {difficultyLevels.map((lvl) => {
                 const isSelected = difficulty === lvl.id;
@@ -264,7 +337,6 @@ export const StudentRegistration = ({ onRegisterStudent, availableQuestionsCount
                     }`}
                   >
                     <div>
-                      {/* Header */}
                       <div className="flex items-center justify-between mb-2">
                         <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-lg border flex items-center space-x-1 ${lvl.badgeColor}`}>
                           <IconComp className={`w-3.5 h-3.5 ${lvl.iconColor}`} />
@@ -283,7 +355,6 @@ export const StudentRegistration = ({ onRegisterStudent, availableQuestionsCount
                       </p>
                     </div>
 
-                    {/* Topics Chips */}
                     <div className="flex flex-wrap gap-1 border-t border-slate-800/60 pt-2">
                       {lvl.topics.map((tp, idx) => (
                         <span key={idx} className="text-[10px] bg-slate-900 text-slate-400 px-2 py-0.5 rounded border border-slate-800">
@@ -298,28 +369,24 @@ export const StudentRegistration = ({ onRegisterStudent, availableQuestionsCount
             </div>
           </div>
 
-          {/* Submit Action Button */}
           <div className="pt-2">
             <button
               type="submit"
               className="w-full py-3.5 px-6 rounded-2xl bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-600 hover:from-indigo-500 hover:via-purple-500 hover:to-indigo-500 text-white font-bold text-base shadow-xl shadow-indigo-600/30 border border-indigo-400/30 flex items-center justify-center space-x-2 transition-all hover:scale-[1.01] active:scale-[0.99]"
             >
-              <span>Continue</span>
+              <span>Continue to Guidelines</span>
               <ArrowRight className="w-5 h-5 ml-1" />
             </button>
           </div>
 
         </form>
 
-        {/* Right Preview: Live Candidate Exam Pass Card (5 Cols) */}
+        {/* Right Preview Card */}
         <div className="lg:col-span-5 space-y-6">
-          
           <div className="glass-panel rounded-3xl p-6 shadow-2xl border border-slate-800/90 relative overflow-hidden space-y-6 holographic-card">
             
-            {/* Ambient Corner Glow */}
             <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/10 rounded-full blur-2xl pointer-events-none" />
 
-            {/* Header */}
             <div className="flex items-center justify-between border-b border-slate-800/90 pb-4 relative z-10">
               <div className="flex items-center space-x-2">
                 <QrCode className="w-5 h-5 text-amber-400 animate-pulse" />
@@ -331,16 +398,13 @@ export const StudentRegistration = ({ onRegisterStudent, availableQuestionsCount
               </span>
             </div>
 
-            {/* Candidate Card Visual */}
             <div className="bg-slate-950/90 rounded-2xl p-5 border border-amber-500/40 relative overflow-hidden space-y-5 shadow-2xl z-10 backdrop-blur-md">
               
-              {/* Decorative Corner Lines */}
               <div className="absolute top-2 left-2 w-4 h-4 border-t-2 border-l-2 border-amber-400/60" />
               <div className="absolute top-2 right-2 w-4 h-4 border-t-2 border-r-2 border-amber-400/60" />
               <div className="absolute bottom-2 left-2 w-4 h-4 border-b-2 border-l-2 border-amber-400/60" />
               <div className="absolute bottom-2 right-2 w-4 h-4 border-b-2 border-r-2 border-amber-400/60" />
 
-              {/* Avatar + Info */}
               <div className="flex items-center space-x-4">
                 <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500 via-purple-600 to-amber-500 p-0.5 shadow-xl shrink-0 animate-glow-pulse">
                   <div className="w-full h-full bg-slate-900 rounded-[14px] flex items-center justify-center text-xl font-black text-white tracking-widest">
@@ -362,31 +426,28 @@ export const StudentRegistration = ({ onRegisterStudent, availableQuestionsCount
                 </div>
               </div>
 
-              {/* Assessment Meta Pills */}
               <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-900 text-xs">
                 <div className="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800/80">
-                  <span className="text-[10px] text-slate-500 font-semibold block uppercase tracking-wider">Level</span>
-                  <span className="font-extrabold text-amber-400">{difficulty}</span>
+                  <span className="text-[10px] text-slate-500 font-semibold block uppercase tracking-wider">Subject Track</span>
+                  <span className="font-extrabold text-amber-400">{currentLangObj?.name}</span>
                 </div>
 
                 <div className="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800/80">
-                  <span className="text-[10px] text-slate-500 font-semibold block uppercase tracking-wider">Pass Mark</span>
-                  <span className="font-extrabold text-emerald-400">&ge; 60%</span>
+                  <span className="text-[10px] text-slate-500 font-semibold block uppercase tracking-wider">Difficulty Level</span>
+                  <span className="font-extrabold text-emerald-400">{difficulty}</span>
                 </div>
               </div>
 
-              {/* Status footer */}
               <div className="flex items-center justify-between text-[11px] text-slate-400 pt-1 border-t border-slate-900/60 font-medium">
                 <span className="flex items-center space-x-1">
                   <BookOpen className="w-3.5 h-3.5 text-indigo-400" />
-                  <span>Subject: C++ & OOP</span>
+                  <span>Track: {currentLangObj?.subtitle}</span>
                 </span>
                 <span className="text-slate-500 font-mono">{new Date().toLocaleDateString()}</span>
               </div>
 
             </div>
 
-            {/* Quick Rules Checklist */}
             <div className="space-y-3 bg-slate-900/70 p-4 rounded-2xl border border-slate-800/90 text-xs text-slate-300 backdrop-blur-md">
               <h4 className="font-extrabold text-white flex items-center space-x-1.5 text-xs uppercase tracking-wider">
                 <Info className="w-4 h-4 text-indigo-400" />
@@ -404,17 +465,15 @@ export const StudentRegistration = ({ onRegisterStudent, availableQuestionsCount
                 </li>
                 <li className="flex items-start space-x-2">
                   <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
-                  <span>Score ≥ 60% earns a certificate.</span>
+                  <span>Score &ge; 60% earns a verified certificate with QR code.</span>
                 </li>
               </ul>
             </div>
 
           </div>
-
         </div>
 
       </div>
-
     </div>
   );
 };

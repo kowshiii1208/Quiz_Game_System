@@ -16,7 +16,30 @@ export const StorageService = {
         localStorage.setItem(KEYS.QUESTIONS, JSON.stringify(INITIAL_QUESTIONS));
         return INITIAL_QUESTIONS;
       }
-      return JSON.parse(data);
+      const parsed = JSON.parse(data);
+      // Migrate old data missing 'language' tag
+      let needsMigration = false;
+      const migrated = parsed.map(q => {
+        if (!q.language) {
+          needsMigration = true;
+          return { ...q, language: 'CPP' };
+        }
+        return q;
+      });
+
+      // If stored array has fewer questions than initial set, merge missing initial questions
+      if (migrated.length < INITIAL_QUESTIONS.length) {
+        const existingIds = new Set(migrated.map(q => q.id));
+        const missing = INITIAL_QUESTIONS.filter(q => !existingIds.has(q.id));
+        const combined = [...migrated, ...missing];
+        localStorage.setItem(KEYS.QUESTIONS, JSON.stringify(combined));
+        return combined;
+      }
+
+      if (needsMigration) {
+        localStorage.setItem(KEYS.QUESTIONS, JSON.stringify(migrated));
+      }
+      return migrated;
     } catch (e) {
       console.error("Failed to load questions", e);
       return INITIAL_QUESTIONS;
@@ -39,7 +62,7 @@ export const StorageService = {
   addQuestion: (newQ) => {
     const questions = StorageService.getQuestions();
     const nextId = questions.length > 0 ? Math.max(...questions.map(q => q.id)) + 1 : 1;
-    const formattedQuestion = { ...newQ, id: nextId };
+    const formattedQuestion = { ...newQ, id: nextId, language: newQ.language || 'CPP' };
     const updated = [formattedQuestion, ...questions];
     StorageService.saveQuestions(updated);
     return updated;

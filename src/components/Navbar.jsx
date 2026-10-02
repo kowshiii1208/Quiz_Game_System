@@ -1,10 +1,11 @@
 import React from 'react';
-import { ShieldCheck, Trophy, Lock, LogOut, Sparkles, BookOpen, AlertTriangle } from 'lucide-react';
+import { ShieldCheck, Trophy, Lock, LogOut, Sparkles, AlertTriangle, FileCheck } from 'lucide-react';
 
 export const Navbar = ({ 
   currentStep, 
   onOpenLeaderboard, 
   onOpenAdmin, 
+  onOpenVerification,
   isAdminLoggedIn, 
   onAdminLogout,
   onResetQuiz,
@@ -46,6 +47,17 @@ export const Navbar = ({
         {/* Right Actions */}
         <div className="flex items-center space-x-3">
           
+          {/* Public Verification Button */}
+          {currentStep !== 'QUIZ' && onOpenVerification && (
+            <button
+              onClick={() => onOpenVerification()}
+              className="flex items-center space-x-2 px-3.5 py-2 rounded-xl text-xs font-semibold bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 transition-all shadow-sm"
+            >
+              <FileCheck className="w-4 h-4 text-emerald-400" />
+              <span className="hidden sm:inline">Verify Certificate</span>
+            </button>
+          )}
+
           {/* Public Leaderboard Button */}
           {currentStep !== 'QUIZ' && (
             <button

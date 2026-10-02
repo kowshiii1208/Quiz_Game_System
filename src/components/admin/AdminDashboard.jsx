@@ -11,14 +11,16 @@ import {
   RotateCcw, 
   Download, 
   Search, 
-  Check, 
   X, 
   Save, 
-  Layers,
-  Clock,
-  Sparkles,
-  ShieldAlert
+  Upload,
+  Code2,
+  Award,
+  UserCheck,
+  Building2,
+  Sparkles
 } from 'lucide-react';
+import { FileImporterModal } from './FileImporterModal';
 
 export const AdminDashboard = ({ 
   questions, 
@@ -31,20 +33,23 @@ export const AdminDashboard = ({
   onClearLeaderboard,
   onClose 
 }) => {
-  const [activeTab, setActiveTab] = useState('QUESTIONS'); // QUESTIONS, LEADERBOARD, SETTINGS, ANALYTICS
+  const [activeTab, setActiveTab] = useState('QUESTIONS'); // QUESTIONS, LEADERBOARD, SETTINGS, CERT_TEMPLATE, ANALYTICS
   
   // Question Filter
   const [questionSearch, setQuestionSearch] = useState('');
   const [difficultyFilter, setDifficultyFilter] = useState('ALL');
+  const [languageFilter, setLanguageFilter] = useState('ALL');
 
   // Question Modal state (Add / Edit)
   const [showQuestionModal, setShowQuestionModal] = useState(false);
+  const [showFileImportModal, setShowFileImportModal] = useState(false);
   const [editingQuestion, setEditingQuestion] = useState(null);
 
   const [qText, setQText] = useState('');
   const [qOptions, setQOptions] = useState(['', '', '', '']);
   const [qCorrect, setQCorrect] = useState(0);
   const [qDifficulty, setQDifficulty] = useState('EASY');
+  const [qLanguage, setQLanguage] = useState('CPP');
   const [qTopic, setQTopic] = useState('');
   const [qExplanation, setQExplanation] = useState('');
 
@@ -55,9 +60,10 @@ export const AdminDashboard = ({
   // Filtered Questions
   const filteredQuestions = questions.filter(q => {
     const matchesSearch = q.text.toLowerCase().includes(questionSearch.toLowerCase()) || 
-                          q.topic.toLowerCase().includes(questionSearch.toLowerCase());
+                          (q.topic && q.topic.toLowerCase().includes(questionSearch.toLowerCase()));
     const matchesDiff = difficultyFilter === 'ALL' || q.difficulty === difficultyFilter;
-    return matchesSearch && matchesDiff;
+    const matchesLang = languageFilter === 'ALL' || q.language === languageFilter;
+    return matchesSearch && matchesDiff && matchesLang;
   });
 
   const handleOpenAddQuestion = () => {
@@ -66,6 +72,7 @@ export const AdminDashboard = ({
     setQOptions(['', '', '', '']);
     setQCorrect(0);
     setQDifficulty('EASY');
+    setQLanguage('CPP');
     setQTopic('General OOP');
     setQExplanation('');
     setShowQuestionModal(true);
@@ -77,7 +84,8 @@ export const AdminDashboard = ({
     setQOptions([...q.options]);
     setQCorrect(q.correctOptionIndex);
     setQDifficulty(q.difficulty);
-    setQTopic(q.topic);
+    setQLanguage(q.language || 'CPP');
+    setQTopic(q.topic || '');
     setQExplanation(q.explanation || '');
     setShowQuestionModal(true);
   };
@@ -90,19 +98,18 @@ export const AdminDashboard = ({
     }
 
     if (editingQuestion) {
-      // Edit
       const updated = questions.map(q => q.id === editingQuestion.id ? {
         ...q,
         text: qText.trim(),
         options: qOptions.map(o => o.trim()),
         correctOptionIndex: parseInt(qCorrect),
         difficulty: qDifficulty,
+        language: qLanguage,
         topic: qTopic.trim(),
         explanation: qExplanation.trim()
       } : q);
       onSaveQuestions(updated);
     } else {
-      // Add new
       const nextId = questions.length > 0 ? Math.max(...questions.map(q => q.id)) + 1 : 1;
       const newQ = {
         id: nextId,
@@ -110,12 +117,22 @@ export const AdminDashboard = ({
         options: qOptions.map(o => o.trim()),
         correctOptionIndex: parseInt(qCorrect),
         difficulty: qDifficulty,
+        language: qLanguage,
         topic: qTopic.trim(),
         explanation: qExplanation.trim()
       };
       onSaveQuestions([newQ, ...questions]);
     }
     setShowQuestionModal(false);
+  };
+
+  const handleBulkImportQuestions = (newQuestions) => {
+    let nextId = questions.length > 0 ? Math.max(...questions.map(q => q.id)) + 1 : 1;
+    const formatted = newQuestions.map((q, idx) => ({
+      ...q,
+      id: nextId + idx
+    }));
+    onSaveQuestions([...formatted, ...questions]);
   };
 
   const handleDeleteQuestion = (id) => {
@@ -137,11 +154,12 @@ export const AdminDashboard = ({
       alert("No leaderboard data to export.");
       return;
     }
-    const headers = ["Candidate Name", "Roll Number", "College", "Difficulty", "Score", "Max Score", "Percentage", "Time Taken (s)", "Cheating Flag", "Date"];
+    const headers = ["Candidate Name", "Roll Number", "College", "Language", "Difficulty", "Score", "Max Score", "Percentage", "Time Taken (s)", "Cheating Flag", "Date"];
     const rows = leaderboard.map(r => [
       `"${r.student.name}"`,
       `"${r.student.rollNumber}"`,
       `"${r.student.college}"`,
+      `"${r.student.language || 'CPP'}"`,
       `"${r.student.difficulty}"`,
       r.score,
       r.maxScore,
@@ -165,7 +183,6 @@ export const AdminDashboard = ({
   const totalAttempts = leaderboard.length;
   const passedAttempts = leaderboard.filter(r => !r.cheatingDetected && r.percentage >= 60).length;
   const passRate = totalAttempts > 0 ? Math.round((passedAttempts / totalAttempts) * 100) : 0;
-  const avgScore = totalAttempts > 0 ? Math.round(leaderboard.reduce((acc, r) => acc + r.percentage, 0) / totalAttempts) : 0;
   const cheatingCount = leaderboard.filter(r => r.cheatingDetected).length;
 
   return (
@@ -182,7 +199,7 @@ export const AdminDashboard = ({
               <h2 className="text-2xl font-extrabold text-white flex items-center space-x-2">
                 <span>Administrator Control Center</span>
               </h2>
-              <p className="text-xs text-slate-400">Manage Question Bank, Leaderboards, Settings & Analytics</p>
+              <p className="text-xs text-slate-400">Manage Question Bank, File Imports, Leaderboards, Settings & Certificate Signatories</p>
             </div>
           </div>
 
@@ -199,6 +216,7 @@ export const AdminDashboard = ({
         <div className="flex items-center space-x-2 border-b border-slate-800 py-3 overflow-x-auto">
           {[
             { id: 'QUESTIONS', label: 'Question Bank', icon: HelpCircle, count: questions.length },
+            { id: 'CERT_TEMPLATE', label: 'Certificate & Signatories', icon: Award },
             { id: 'LEADERBOARD', label: 'Leaderboard Records', icon: Trophy, count: leaderboard.length },
             { id: 'SETTINGS', label: 'Quiz Settings', icon: Settings },
             { id: 'ANALYTICS', label: 'Analytics Dashboard', icon: BarChart3 }
@@ -237,17 +255,28 @@ export const AdminDashboard = ({
               {/* Question Action Controls */}
               <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
                 
-                <div className="flex items-center space-x-3 w-full sm:w-auto">
-                  <div className="relative flex-1 sm:w-64">
+                <div className="flex items-center space-x-2 w-full sm:w-auto flex-wrap">
+                  <div className="relative flex-1 sm:w-52 min-w-[140px]">
                     <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
                     <input
                       type="text"
                       value={questionSearch}
                       onChange={(e) => setQuestionSearch(e.target.value)}
-                      placeholder="Search questions or topic..."
+                      placeholder="Search question..."
                       className="w-full pl-9 pr-3 py-2 rounded-xl glass-input text-xs"
                     />
                   </div>
+
+                  <select
+                    value={languageFilter}
+                    onChange={(e) => setLanguageFilter(e.target.value)}
+                    className="py-2 px-3 rounded-xl glass-input text-xs bg-slate-900"
+                  >
+                    <option value="ALL">All Languages</option>
+                    <option value="CPP">C++</option>
+                    <option value="JAVA">Java</option>
+                    <option value="PYTHON">Python</option>
+                  </select>
 
                   <select
                     value={difficultyFilter}
@@ -261,10 +290,18 @@ export const AdminDashboard = ({
                   </select>
                 </div>
 
-                <div className="flex items-center space-x-2 w-full sm:w-auto justify-end">
+                <div className="flex items-center space-x-2 w-full sm:w-auto justify-end flex-wrap">
+                  <button
+                    onClick={() => setShowFileImportModal(true)}
+                    className="px-3.5 py-2 rounded-xl bg-purple-600/30 hover:bg-purple-600/50 text-purple-200 border border-purple-500/40 text-xs font-bold flex items-center space-x-1.5 transition-all shadow-lg shadow-purple-600/20"
+                  >
+                    <Upload className="w-4 h-4 text-purple-400" />
+                    <span>Import PDF/Word/File</span>
+                  </button>
+
                   <button
                     onClick={onResetQuestions}
-                    className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold flex items-center space-x-1.5 transition-all"
+                    className="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold flex items-center space-x-1.5 transition-all"
                   >
                     <RotateCcw className="w-4 h-4 text-amber-400" />
                     <span>Reset Defaults</span>
@@ -289,14 +326,17 @@ export const AdminDashboard = ({
                     <p className="text-sm font-semibold">No questions match your filter.</p>
                   </div>
                 ) : (
-                  filteredQuestions.map((q, idx) => (
+                  filteredQuestions.map((q) => (
                     <div
                       key={q.id}
                       className="glass-card rounded-2xl p-4 border border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 hover:border-slate-700 transition-all"
                     >
                       <div className="space-y-1.5 flex-1">
-                        <div className="flex items-center space-x-2">
+                        <div className="flex items-center space-x-2 flex-wrap gap-y-1">
                           <span className="text-xs font-bold text-slate-400">#{q.id}</span>
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded border bg-indigo-500/10 text-indigo-300 border-indigo-500/30">
+                            {q.language || 'CPP'}
+                          </span>
                           <span className={`text-[10px] font-bold px-2 py-0.5 rounded border uppercase ${
                             q.difficulty === 'EASY' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' :
                             q.difficulty === 'MEDIUM' ? 'bg-amber-500/10 text-amber-400 border-amber-500/30' :
@@ -338,7 +378,192 @@ export const AdminDashboard = ({
             </div>
           )}
 
-          {/* TAB 2: LEADERBOARD MANAGER */}
+          {/* TAB 2: CERTIFICATE TEMPLATE & SIGNATORIES */}
+          {activeTab === 'CERT_TEMPLATE' && (
+            <form onSubmit={handleSaveSettingsForm} className="max-w-4xl mx-auto space-y-8">
+              
+              {/* Top Banner */}
+              <div className="bg-amber-500/10 border border-amber-500/30 p-4 rounded-2xl flex items-center space-x-3">
+                <Award className="w-6 h-6 text-amber-400 shrink-0" />
+                <div className="text-xs">
+                  <h4 className="font-extrabold text-amber-300 text-sm">Certificate Template & Signatory Customization</h4>
+                  <p className="text-slate-300">Modify Project Mentor, HOD details, and certificate award wording. Changes update all generated student certificates instantly.</p>
+                </div>
+              </div>
+
+              {/* Grid 1: Project Mentor Details */}
+              <div className="glass-card p-6 rounded-3xl border border-slate-800 space-y-4">
+                <h3 className="text-base font-bold text-white flex items-center space-x-2 border-b border-slate-800 pb-2">
+                  <UserCheck className="w-5 h-5 text-indigo-400" />
+                  <span>1. Project Mentor Signature Block</span>
+                </h3>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-slate-300 uppercase">Mentor Signature Name</label>
+                    <input
+                      type="text"
+                      value={localSettings.mentorName || 'SK. VAHIDA'}
+                      onChange={(e) => setLocalSettings({ ...localSettings, mentorName: e.target.value })}
+                      placeholder="e.g. SK. Vahida"
+                      className="w-full px-4 py-2.5 rounded-xl glass-input text-xs"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-slate-300 uppercase">Full Name & Qualifications</label>
+                    <input
+                      type="text"
+                      value={localSettings.mentorTitle || 'SK. VAHIDA, M.Tech(Ph.D)'}
+                      onChange={(e) => setLocalSettings({ ...localSettings, mentorTitle: e.target.value })}
+                      placeholder="e.g. SK. VAHIDA, M.Tech(Ph.D)"
+                      className="w-full px-4 py-2.5 rounded-xl glass-input text-xs"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-slate-300 uppercase">Designation / Role</label>
+                    <input
+                      type="text"
+                      value={localSettings.mentorRole || 'Assistant Professor & Project Mentor'}
+                      onChange={(e) => setLocalSettings({ ...localSettings, mentorRole: e.target.value })}
+                      placeholder="e.g. Assistant Professor & Project Mentor"
+                      className="w-full px-4 py-2.5 rounded-xl glass-input text-xs"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Grid 2: HOD Details */}
+              <div className="glass-card p-6 rounded-3xl border border-slate-800 space-y-4">
+                <h3 className="text-base font-bold text-white flex items-center space-x-2 border-b border-slate-800 pb-2">
+                  <Building2 className="w-5 h-5 text-amber-400" />
+                  <span>2. Head of Department (HOD) Signature Block</span>
+                </h3>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-slate-300 uppercase">HOD Signature Name</label>
+                    <input
+                      type="text"
+                      value={localSettings.hodName || 'Dr. K. Srinivasa Rao'}
+                      onChange={(e) => setLocalSettings({ ...localSettings, hodName: e.target.value })}
+                      placeholder="e.g. Dr. K. Srinivasa Rao"
+                      className="w-full px-4 py-2.5 rounded-xl glass-input text-xs"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-slate-300 uppercase">Full Name & Degrees</label>
+                    <input
+                      type="text"
+                      value={localSettings.hodTitle || 'Dr. K. Srinivasa Rao, Ph.D'}
+                      onChange={(e) => setLocalSettings({ ...localSettings, hodTitle: e.target.value })}
+                      placeholder="e.g. Dr. K. Srinivasa Rao, Ph.D"
+                      className="w-full px-4 py-2.5 rounded-xl glass-input text-xs"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-slate-300 uppercase">Designation / Role</label>
+                    <input
+                      type="text"
+                      value={localSettings.hodRole || 'Head of Department (CSE)'}
+                      onChange={(e) => setLocalSettings({ ...localSettings, hodRole: e.target.value })}
+                      placeholder="e.g. Head of Department (CSE)"
+                      className="w-full px-4 py-2.5 rounded-xl glass-input text-xs"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Grid 3: Certificate Text & Department */}
+              <div className="glass-card p-6 rounded-3xl border border-slate-800 space-y-4">
+                <h3 className="text-base font-bold text-white flex items-center space-x-2 border-b border-slate-800 pb-2">
+                  <Sparkles className="w-5 h-5 text-purple-400" />
+                  <span>3. Certificate Wording & Header Titles</span>
+                </h3>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-slate-300 uppercase">University Name</label>
+                    <input
+                      type="text"
+                      value={localSettings.collegeName || 'ADITYA UNIVERSITY'}
+                      onChange={(e) => setLocalSettings({ ...localSettings, collegeName: e.target.value })}
+                      className="w-full px-4 py-2.5 rounded-xl glass-input text-xs"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-slate-300 uppercase">Department Name</label>
+                    <input
+                      type="text"
+                      value={localSettings.departmentName || 'DEPARTMENT OF COMPUTER SCIENCE & ENGINEERING'}
+                      onChange={(e) => setLocalSettings({ ...localSettings, departmentName: e.target.value })}
+                      className="w-full px-4 py-2.5 rounded-xl glass-input text-xs"
+                    />
+                  </div>
+
+                  <div className="sm:col-span-2 space-y-1">
+                    <label className="text-xs font-bold text-slate-300 uppercase">Award Body Sentence ("This is to certify that...")</label>
+                    <textarea
+                      rows="2"
+                      value={localSettings.certBodyText || 'for successfully passing the official online assessment in'}
+                      onChange={(e) => setLocalSettings({ ...localSettings, certBodyText: e.target.value })}
+                      className="w-full px-4 py-2.5 rounded-xl glass-input text-xs"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Signatures Live Preview Card */}
+              <div className="bg-slate-950 p-6 rounded-3xl border border-amber-500/40 space-y-4 text-center">
+                <span className="text-xs font-bold text-amber-400 uppercase tracking-widest block">Live Signature Block Preview</span>
+                <div className="grid grid-cols-3 gap-4 items-end text-xs pt-4 border-t border-slate-800">
+                  <div className="text-left space-y-0.5">
+                    <div className="font-serif italic text-sm text-slate-200 font-bold border-b border-slate-700 pb-0.5 inline-block">
+                      {localSettings.mentorName || 'SK. Vahida'}
+                    </div>
+                    <p className="font-bold text-amber-300 text-[11px]">{localSettings.mentorTitle || 'SK. VAHIDA, M.Tech(Ph.D)'}</p>
+                    <p className="text-slate-400 text-[10px]">{localSettings.mentorRole || 'Assistant Professor & Project Mentor'}</p>
+                  </div>
+
+                  <div className="flex flex-col items-center justify-center">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-amber-600 to-yellow-400 flex items-center justify-center text-slate-950 font-black shadow-lg">
+                      <Award className="w-5 h-5" />
+                    </div>
+                    <p className="text-[9px] text-slate-400 mt-1">Official University Seal</p>
+                  </div>
+
+                  <div className="text-right space-y-0.5">
+                    <div className="font-serif italic text-sm text-slate-200 font-bold border-b border-slate-700 pb-0.5 inline-block">
+                      {localSettings.hodName || 'Dr. K. Srinivasa Rao'}
+                    </div>
+                    <p className="font-bold text-amber-300 text-[11px]">{localSettings.hodTitle || 'Dr. K. Srinivasa Rao, Ph.D'}</p>
+                    <p className="text-slate-400 text-[10px]">{localSettings.hodRole || 'Head of Department (CSE)'}</p>
+                  </div>
+                </div>
+              </div>
+
+              {settingsSavedMessage && (
+                <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs text-center font-bold">
+                  ✓ Certificate Signatories & Template Updated Successfully!
+                </div>
+              )}
+
+              <button
+                type="submit"
+                className="w-full py-3.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm shadow-lg shadow-indigo-600/30 flex items-center justify-center space-x-2 transition-all"
+              >
+                <Save className="w-4 h-4" />
+                <span>Save Certificate Configuration</span>
+              </button>
+
+            </form>
+          )}
+
+          {/* TAB 3: LEADERBOARD MANAGER */}
           {activeTab === 'LEADERBOARD' && (
             <div className="space-y-6">
               
@@ -382,6 +607,9 @@ export const AdminDashboard = ({
                         <div className="flex items-center space-x-2">
                           <span className="font-bold text-white text-sm">{rec.student.name}</span>
                           <span className="text-xs text-indigo-400 font-semibold">({rec.student.rollNumber})</span>
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-300 border border-indigo-500/30">
+                            {rec.student.language || 'CPP'}
+                          </span>
                           <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-800 text-slate-300">
                             {rec.student.difficulty}
                           </span>
@@ -405,7 +633,7 @@ export const AdminDashboard = ({
             </div>
           )}
 
-          {/* TAB 3: QUIZ CONFIGURATION SETTINGS */}
+          {/* TAB 4: QUIZ CONFIGURATION SETTINGS */}
           {activeTab === 'SETTINGS' && (
             <form onSubmit={handleSaveSettingsForm} className="max-w-2xl mx-auto space-y-6">
               
@@ -461,7 +689,6 @@ export const AdminDashboard = ({
 
               </div>
 
-              {/* Checkboxes */}
               <div className="space-y-3 pt-4 border-t border-slate-800">
                 <label className="flex items-center space-x-3 cursor-pointer">
                   <input
@@ -501,7 +728,7 @@ export const AdminDashboard = ({
             </form>
           )}
 
-          {/* TAB 4: ANALYTICS DASHBOARD */}
+          {/* TAB 5: ANALYTICS DASHBOARD */}
           {activeTab === 'ANALYTICS' && (
             <div className="space-y-6">
               
@@ -513,7 +740,7 @@ export const AdminDashboard = ({
                 </div>
 
                 <div className="glass-card p-5 rounded-2xl border border-slate-800">
-                  <span className="text-xs text-slate-400 block mb-1">Total Student Candidates</span>
+                  <span className="text-xs text-slate-400 block mb-1">Total Candidates</span>
                   <span className="text-2xl font-black text-indigo-400">{totalAttempts}</span>
                 </div>
 
@@ -566,7 +793,20 @@ export const AdminDashboard = ({
                 />
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-slate-300">Target Language</label>
+                  <select
+                    value={qLanguage}
+                    onChange={(e) => setQLanguage(e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl glass-input text-sm bg-slate-900"
+                  >
+                    <option value="CPP">C++</option>
+                    <option value="JAVA">Java</option>
+                    <option value="PYTHON">Python</option>
+                  </select>
+                </div>
+
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold text-slate-300">Difficulty Level</label>
                   <select
@@ -661,6 +901,14 @@ export const AdminDashboard = ({
           </div>
         </div>
       )}
+
+      {/* File Import Modal */}
+      <FileImporterModal
+        isOpen={showFileImportModal}
+        onClose={() => setShowFileImportModal(false)}
+        onImportQuestions={handleBulkImportQuestions}
+        existingQuestionsCount={questions.length}
+      />
 
     </div>
   );

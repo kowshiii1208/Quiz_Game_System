@@ -6,6 +6,7 @@ import { InstructionsModal } from './components/InstructionsModal';
 import { QuizRunner } from './components/QuizRunner';
 import { QuizResults } from './components/QuizResults';
 import { CertificateModal } from './components/CertificateModal';
+import { VerificationModal } from './components/VerificationModal';
 import { Leaderboard } from './components/Leaderboard';
 import { AdminLoginModal } from './components/admin/AdminLoginModal';
 import { AdminDashboard } from './components/admin/AdminDashboard';
@@ -25,6 +26,8 @@ export function App() {
   // Modals
   const [showLeaderboard, setShowLeaderboard] = useState(false);
   const [showCertificate, setShowCertificate] = useState(false);
+  const [showVerificationModal, setShowVerificationModal] = useState(false);
+  const [verificationCertId, setVerificationCertId] = useState('');
   const [showAdminLogin, setShowAdminLogin] = useState(false);
   const [showAdminDashboard, setShowAdminDashboard] = useState(false);
 
@@ -45,13 +48,21 @@ export function App() {
   const handleRegisterStudent = (studentDetails) => {
     setStudent(studentDetails);
 
-    // Filter questions by level
+    // Filter questions by language & level
     const allQuestions = StorageService.getQuestions();
-    let levelFiltered = allQuestions;
+    
+    // 1. Language Filter
+    let langFiltered = allQuestions.filter(q => (q.language || 'CPP') === (studentDetails.language || 'CPP'));
+    if (langFiltered.length === 0) {
+      langFiltered = allQuestions; // Fallback
+    }
+
+    // 2. Difficulty Filter
+    let levelFiltered = langFiltered;
     if (studentDetails.difficulty !== 'MIXED') {
-      levelFiltered = allQuestions.filter(q => q.difficulty === studentDetails.difficulty);
+      levelFiltered = langFiltered.filter(q => q.difficulty === studentDetails.difficulty);
       if (levelFiltered.length === 0) {
-        levelFiltered = allQuestions; // Fallback if no specific questions exist for level
+        levelFiltered = langFiltered; // Fallback
       }
     }
 
@@ -85,6 +96,12 @@ export function App() {
 
     setLeaderboard(updatedLeaderboard);
     setCurrentStep('RESULTS');
+  };
+
+  // Open Verification Modal
+  const handleOpenVerification = (certId = '') => {
+    setVerificationCertId(certId);
+    setShowVerificationModal(true);
   };
 
   // Admin Actions
@@ -146,13 +163,14 @@ export function App() {
         currentStep={currentStep}
         onOpenLeaderboard={() => setShowLeaderboard(true)}
         onOpenAdmin={() => isAdminLoggedIn ? setShowAdminDashboard(true) : setShowAdminLogin(true)}
+        onOpenVerification={() => handleOpenVerification('')}
         isAdminLoggedIn={isAdminLoggedIn}
         onAdminLogout={handleAdminLogout}
         onResetQuiz={handleResetApp}
         activeStudent={student}
       />
 
-      {/* Assessment Workflow Stepper Bar (Visible during non-quiz or preview states) */}
+      {/* Assessment Workflow Stepper Bar */}
       <div className="w-full border-b border-slate-800/60 bg-slate-950/40 backdrop-blur-md py-2.5 px-4">
         <div className="max-w-4xl mx-auto flex items-center justify-between text-xs font-semibold">
           {[
@@ -254,9 +272,17 @@ export function App() {
       {showCertificate && (
         <CertificateModal
           result={quizResult}
+          settings={settings}
           onClose={() => setShowCertificate(false)}
+          onOpenVerification={handleOpenVerification}
         />
       )}
+
+      <VerificationModal
+        isOpen={showVerificationModal}
+        initialCertId={verificationCertId}
+        onClose={() => setShowVerificationModal(false)}
+      />
 
       <AdminLoginModal
         isOpen={showAdminLogin}
