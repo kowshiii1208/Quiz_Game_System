@@ -148,7 +148,7 @@ export const VerificationModal = ({ isOpen, onClose, initialCertId = '' }) => {
                   <div className="flex justify-between border-b border-slate-900 pb-2">
                     <span className="text-slate-400 flex items-center"><BookOpen className="w-3.5 h-3.5 mr-1 text-indigo-400" /> Subject / Track:</span>
                     <span className="text-amber-400 font-bold">
-                      {verificationResult.record.student.language === 'JAVA' ? 'Java Architecture' : verificationResult.record.student.language === 'PYTHON' ? 'Python Programming' : 'C++ Architecture'} ({verificationResult.record.student.difficulty} Level)
+                      {verificationResult.record.student.language === 'C' ? 'C Programming' : verificationResult.record.student.language === 'JAVA' ? 'Java Architecture' : verificationResult.record.student.language === 'PYTHON' ? 'Python Programming' : 'C++ Architecture'} ({verificationResult.record.student.difficulty} Level)
                     </span>
                   </div>
 

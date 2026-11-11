@@ -318,6 +318,7 @@ export function App() {
         isOpen={showAdminLogin}
         onClose={() => setShowAdminLogin(false)}
         onLoginSuccess={handleAdminLoginSuccess}
+        customPassword={settings.adminPassword}
       />
 
       {showAdminDashboard && (
@@ -330,6 +331,7 @@ export function App() {
           onSaveSettings={handleSaveSettings}
           onDeleteLeaderboardEntry={handleDeleteLeaderboardEntry}
           onClearLeaderboard={handleClearLeaderboard}
+          onLogout={handleAdminLogout}
           onClose={() => setShowAdminDashboard(false)}
         />
       )}

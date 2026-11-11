@@ -11,7 +11,8 @@ import {
   Code2, 
   Cpu, 
   Terminal,
-  Users
+  Users,
+  Binary
 } from 'lucide-react';
 
 export const AnalyticsDashboard = ({ questions = [], leaderboard = [] }) => {
@@ -31,6 +32,7 @@ export const AnalyticsDashboard = ({ questions = [], leaderboard = [] }) => {
   };
 
   // Language Breakdown
+  const cAttempts = leaderboard.filter(r => r.student?.language === 'C');
   const cppAttempts = leaderboard.filter(r => (r.student?.language || 'CPP') === 'CPP');
   const javaAttempts = leaderboard.filter(r => r.student?.language === 'JAVA');
   const pythonAttempts = leaderboard.filter(r => r.student?.language === 'PYTHON');
@@ -149,6 +151,7 @@ export const AnalyticsDashboard = ({ questions = [], leaderboard = [] }) => {
 
           <div className="space-y-3">
             {[
+              { name: 'C Programming', icon: Binary, attempts: cAttempts.length, avg: getAvgScore(cAttempts), color: 'text-cyan-400 border-cyan-500/30' },
               { name: 'C++ Architecture', icon: Cpu, attempts: cppAttempts.length, avg: getAvgScore(cppAttempts), color: 'text-blue-400 border-blue-500/30' },
               { name: 'Java Enterprise', icon: Code2, attempts: javaAttempts.length, avg: getAvgScore(javaAttempts), color: 'text-amber-400 border-amber-500/30' },
               { name: 'Python Core', icon: Terminal, attempts: pythonAttempts.length, avg: getAvgScore(pythonAttempts), color: 'text-emerald-400 border-emerald-500/30' }

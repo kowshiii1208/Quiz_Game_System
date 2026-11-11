@@ -35,7 +35,8 @@ export const CertificateModal = ({ result, settings = {}, onClose, onOpenVerific
   const hodTitle = settings.hodTitle || "Dr. K. Srinivasa Rao, Ph.D";
   const hodRole = settings.hodRole || "Head of Department (CSE)";
 
-  const langName = student.language === 'JAVA' ? 'Java Enterprise Architecture' : 
+  const langName = student.language === 'C' ? 'C Systems & Procedural Programming' :
+                   student.language === 'JAVA' ? 'Java Enterprise Architecture' : 
                    student.language === 'PYTHON' ? 'Python & Algorithmic Architecture' : 
                    'Object-Oriented Programming & C++ Architecture';
 

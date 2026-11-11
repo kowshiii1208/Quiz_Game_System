@@ -22,7 +22,7 @@ import QRCode from 'qrcode';
 import { StorageService } from '../../services/storage';
 import { ExcelExportService } from '../../services/excelExport';
 
-export const QuizCreatorTab = ({ questions = [], leaderboard = [] }) => {
+export const QuizCreatorTab = ({ questions = [], leaderboard = [], onSaveQuestions }) => {
   const [quizzes, setQuizzes] = useState([]);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
@@ -36,6 +36,7 @@ export const QuizCreatorTab = ({ questions = [], leaderboard = [] }) => {
   const [quizCode, setQuizCode] = useState('');
   const [description, setDescription] = useState('');
   const [language, setLanguage] = useState('CPP');
+  const [difficulty, setDifficulty] = useState('MIXED');
   const [durationMinutes, setDurationMinutes] = useState(15);
   const [passingPercentage, setPassingPercentage] = useState(60);
   const [enableWebcamProctor, setEnableWebcamProctor] = useState(true);
@@ -69,6 +70,7 @@ export const QuizCreatorTab = ({ questions = [], leaderboard = [] }) => {
     setQuizCode(`AU-QUIZ-${Math.floor(1000 + Math.random() * 9000)}`);
     setDescription('');
     setLanguage('CPP');
+    setDifficulty('MIXED');
     setDurationMinutes(15);
     setPassingPercentage(60);
     setEnableWebcamProctor(true);
@@ -94,6 +96,7 @@ export const QuizCreatorTab = ({ questions = [], leaderboard = [] }) => {
       title: title.trim(),
       description: description.trim(),
       language,
+      difficulty,
       durationMinutes: parseInt(durationMinutes) || 15,
       passingPercentage: parseInt(passingPercentage) || 60,
       enableWebcamProctor,
@@ -126,6 +129,9 @@ export const QuizCreatorTab = ({ questions = [], leaderboard = [] }) => {
     };
 
     const updatedBank = StorageService.addQuestion(newQ);
+    if (onSaveQuestions) {
+      onSaveQuestions(updatedBank);
+    }
     const addedId = updatedBank[0].id; // newest question has highest ID
     setSelectedQuestionIds(prev => [...prev, addedId]);
 
@@ -472,7 +478,7 @@ export const QuizCreatorTab = ({ questions = [], leaderboard = [] }) => {
               </div>
 
               {/* Assessment Parameters */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-4 rounded-2xl bg-slate-900/60 border border-slate-800">
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 p-4 rounded-2xl bg-slate-900/60 border border-slate-800">
                 <div className="space-y-1">
                   <label className="text-[11px] font-semibold text-slate-400">Language</label>
                   <select
@@ -480,9 +486,24 @@ export const QuizCreatorTab = ({ questions = [], leaderboard = [] }) => {
                     onChange={(e) => setLanguage(e.target.value)}
                     className="w-full px-2.5 py-2 rounded-lg bg-slate-950 border border-slate-700 text-xs text-white"
                   >
+                    <option value="C">C Programming</option>
                     <option value="CPP">C++</option>
                     <option value="JAVA">Java</option>
                     <option value="PYTHON">Python</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[11px] font-semibold text-slate-400">Difficulty</label>
+                  <select
+                    value={difficulty}
+                    onChange={(e) => setDifficulty(e.target.value)}
+                    className="w-full px-2.5 py-2 rounded-lg bg-slate-950 border border-slate-700 text-xs text-white"
+                  >
+                    <option value="EASY">Easy</option>
+                    <option value="MEDIUM">Medium</option>
+                    <option value="HARD">Hard</option>
+                    <option value="MIXED">Mixed</option>
                   </select>
                 </div>
 
@@ -510,7 +531,7 @@ export const QuizCreatorTab = ({ questions = [], leaderboard = [] }) => {
                   />
                 </div>
 
-                <div className="space-y-1">
+                <div className="space-y-1 col-span-2 sm:col-span-1">
                   <label className="text-[11px] font-semibold text-slate-400">Webcam Proctor</label>
                   <select
                     value={enableWebcamProctor ? 'true' : 'false'}
@@ -624,6 +645,7 @@ export const QuizCreatorTab = ({ questions = [], leaderboard = [] }) => {
                     className="px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white"
                   >
                     <option value="ALL">All Tracks</option>
+                    <option value="C">C Programming</option>
                     <option value="CPP">C++</option>
                     <option value="JAVA">Java</option>
                     <option value="PYTHON">Python</option>

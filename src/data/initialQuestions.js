@@ -1149,6 +1149,400 @@ export const INITIAL_QUESTIONS = [
     difficulty: "HARD",
     topic: "Functools & Wraps",
     explanation: "@functools.wraps(func) copies metadata like __name__ and __doc__ from the decorated function onto the wrapper function."
+  },
+
+  // ==========================================
+  // --- C PROGRAMMING QUESTIONS (30 QUESTIONS) ---
+  // ==========================================
+  // --- C EASY ---
+  {
+    id: 91,
+    language: "C",
+    text: "Which header file is required to use printf() and scanf() functions in C?",
+    options: ["<stdlib.h>", "<stdio.h>", "<conio.h>", "<string.h>"],
+    correctOptionIndex: 1,
+    difficulty: "EASY",
+    topic: "Standard I/O",
+    explanation: "<stdio.h> (Standard Input/Output) declares printf(), scanf(), fprintf(), and file I/O routines."
+  },
+  {
+    id: 92,
+    language: "C",
+    text: "What is the format specifier used to print a character array (string) in C?",
+    options: ["%c", "%d", "%s", "%f"],
+    correctOptionIndex: 2,
+    difficulty: "EASY",
+    topic: "Format Specifiers",
+    explanation: "%s prints null-terminated strings, while %c prints a single character."
+  },
+  {
+    id: 93,
+    language: "C",
+    text: "Which operator returns the memory address of a variable in C?",
+    options: ["*", "&", "->", "::"],
+    correctOptionIndex: 1,
+    difficulty: "EASY",
+    topic: "Pointers Basics",
+    explanation: "The address-of operator '&' retrieves the memory address of a variable."
+  },
+  {
+    id: 94,
+    language: "C",
+    text: "Which character marks the end of every valid string in C?",
+    options: ["'\\n'", "'\\t'", "'\\0'", "'EOF'"],
+    correctOptionIndex: 2,
+    difficulty: "EASY",
+    topic: "Strings",
+    explanation: "C strings are null-terminated; the null character '\\0' (ASCII 0) indicates where the string ends in memory."
+  },
+  {
+    id: 95,
+    language: "C",
+    text: "What does the 'sizeof' operator return in C?",
+    options: [
+      "Length of a string excluding null byte",
+      "Memory size of a data type or variable in bytes",
+      "Number of elements in any array",
+      "Bit width of the CPU register"
+    ],
+    correctOptionIndex: 1,
+    difficulty: "EASY",
+    topic: "Operators",
+    explanation: "sizeof is a compile-time unary operator returning the storage size in bytes (type size_t)."
+  },
+  {
+    id: 96,
+    language: "C",
+    text: "Which loop in C guarantees that the loop body executes at least once?",
+    options: ["for loop", "while loop", "do-while loop", "goto loop"],
+    correctOptionIndex: 2,
+    difficulty: "EASY",
+    topic: "Control Flow",
+    explanation: "A do-while loop evaluates its condition after running the body once, ensuring at least one execution."
+  },
+  {
+    id: 97,
+    language: "C",
+    text: "What is the default return type of a function in older C (C89) if omitted, and what should main() return in standard C99+?",
+    options: ["void", "int", "float", "char"],
+    correctOptionIndex: 1,
+    difficulty: "EASY",
+    topic: "Functions",
+    explanation: "Standard C requires 'int main(void)' or 'int main(int argc, char *argv[])', returning 0 on normal exit."
+  },
+  {
+    id: 98,
+    language: "C",
+    text: "Which statement is used to immediately jump out of a loop or switch block?",
+    options: ["continue", "exit", "break", "return"],
+    correctOptionIndex: 2,
+    difficulty: "EASY",
+    topic: "Control Flow",
+    explanation: "'break' terminates the innermost enclosing loop or switch statement immediately."
+  },
+  {
+    id: 99,
+    language: "C",
+    text: "What is the index of the first element in a C array of size N?",
+    options: ["1", "0", "-1", "N-1"],
+    correctOptionIndex: 1,
+    difficulty: "EASY",
+    topic: "Arrays",
+    explanation: "Arrays in C are zero-indexed, so valid indices range from 0 to N - 1."
+  },
+  {
+    id: 100,
+    language: "C",
+    text: "Which keyword is used to declare a constant variable whose value cannot be changed after initialization?",
+    options: ["static", "const", "final", "readonly"],
+    correctOptionIndex: 1,
+    difficulty: "EASY",
+    topic: "Keywords & Constants",
+    explanation: "The 'const' qualifier prevents modification of the variable after initialization."
+  },
+
+  // --- C MEDIUM ---
+  {
+    id: 101,
+    language: "C",
+    text: "What is the primary difference between malloc() and calloc() in C?",
+    options: [
+      "malloc initializes memory to zero, calloc leaves garbage values",
+      "calloc allocates memory and initializes all bytes to zero, while malloc leaves memory uninitialized",
+      "malloc allocates on stack, calloc allocates on heap",
+      "calloc automatically frees memory when out of scope"
+    ],
+    correctOptionIndex: 1,
+    difficulty: "MEDIUM",
+    topic: "Dynamic Memory",
+    explanation: "malloc(size) allocates raw uninitialized bytes; calloc(num, size) allocates and zero-initializes every byte."
+  },
+  {
+    id: 102,
+    language: "C",
+    text: "What is the key difference between a 'struct' and a 'union' in C?",
+    options: [
+      "A struct allocates separate memory for each member, whereas all union members share the same memory location",
+      "A union can contain functions, whereas a struct cannot",
+      "A struct cannot hold pointers",
+      "Unions are stored on the heap by default"
+    ],
+    correctOptionIndex: 0,
+    difficulty: "MEDIUM",
+    topic: "Structs & Unions",
+    explanation: "In a union, size equals the largest member and only one member holds a valid value at a time because they share memory."
+  },
+  {
+    id: 103,
+    language: "C",
+    text: "What happens when a 'static' keyword is used on a local variable inside a C function?",
+    options: [
+      "It becomes accessible globally across all files",
+      "It retains its value across multiple function calls throughout program lifetime",
+      "It is stored inside CPU registers",
+      "It cannot be initialized"
+    ],
+    correctOptionIndex: 1,
+    difficulty: "MEDIUM",
+    topic: "Storage Classes",
+    explanation: "A static local variable has block scope but static storage duration, persisting its state between calls."
+  },
+  {
+    id: 104,
+    language: "C",
+    text: "If 'int arr[5] = {10, 20, 30, 40, 50};', what does '*(arr + 2)' evaluate to?",
+    options: ["10", "20", "30", "Memory address of arr[2]"],
+    correctOptionIndex: 2,
+    difficulty: "MEDIUM",
+    topic: "Pointer Arithmetic",
+    explanation: "Array name 'arr' decays to a pointer to arr[0]. Adding 2 advances by 2 * sizeof(int) bytes, dereferencing arr[2] (30)."
+  },
+  {
+    id: 105,
+    language: "C",
+    text: "Which function in <string.h> compares two strings lexicographically and returns 0 when identical?",
+    options: ["strcpy()", "strcat()", "strcmp()", "strlen()"],
+    correctOptionIndex: 2,
+    difficulty: "MEDIUM",
+    topic: "String Library",
+    explanation: "strcmp(s1, s2) returns 0 if strings are equal, < 0 if s1 < s2, and > 0 if s1 > s2."
+  },
+  {
+    id: 106,
+    language: "C",
+    text: "What does the 'extern' keyword signify when placed before a variable declaration?",
+    options: [
+      "The variable is private to the current file",
+      "The variable is defined in another translation unit (external linkage) without allocating new memory",
+      "The variable is allocated dynamically",
+      "The variable is constant"
+    ],
+    correctOptionIndex: 1,
+    difficulty: "MEDIUM",
+    topic: "Storage Classes",
+    explanation: "'extern' tells the compiler the variable exists and is defined elsewhere, enabling cross-file sharing."
+  },
+  {
+    id: 107,
+    language: "C",
+    text: "Which C function releases heap memory allocated by malloc(), calloc(), or realloc()?",
+    options: ["delete()", "dispose()", "free()", "clear()"],
+    correctOptionIndex: 2,
+    difficulty: "MEDIUM",
+    topic: "Dynamic Memory",
+    explanation: "free(ptr) returns dynamically allocated heap blocks back to the allocator to prevent memory leaks."
+  },
+  {
+    id: 108,
+    language: "C",
+    text: "What is the purpose of the 'typedef' keyword in C?",
+    options: [
+      "Allocates memory for new structs",
+      "Creates an alias (alternative name) for an existing data type",
+      "Converts float to int",
+      "Checks runtime type of a pointer"
+    ],
+    correctOptionIndex: 1,
+    difficulty: "MEDIUM",
+    topic: "Type Aliases",
+    explanation: "typedef improves readability by giving concise aliases to complex types like structs or function pointers."
+  },
+  {
+    id: 109,
+    language: "C",
+    text: "What happens if you increment a pointer 'int *p' by 1 on a 64-bit system where sizeof(int) is 4 bytes?",
+    options: [
+      "Address increases by 1 byte",
+      "Address increases by 4 bytes",
+      "Address increases by 8 bytes",
+      "Compilation error"
+    ],
+    correctOptionIndex: 1,
+    difficulty: "MEDIUM",
+    topic: "Pointer Arithmetic",
+    explanation: "Pointer arithmetic scales by sizeof(*p). Incrementing an int* advances the memory address by sizeof(int) = 4 bytes."
+  },
+  {
+    id: 110,
+    language: "C",
+    text: "How are arguments passed to functions by default in C?",
+    options: ["Pass by reference", "Pass by value", "Pass by pointer", "Pass by macro"],
+    correctOptionIndex: 1,
+    difficulty: "MEDIUM",
+    topic: "Functions",
+    explanation: "C always passes arguments by value (copies the value). Simulating pass-by-reference requires explicitly passing pointers."
+  },
+
+  // --- C HARD ---
+  {
+    id: 111,
+    language: "C",
+    text: "What is a 'dangling pointer' in C?",
+    options: [
+      "A pointer initialized to NULL",
+      "A pointer that still holds the address of a memory block that has already been freed or gone out of scope",
+      "A pointer pointing to a void type",
+      "A pointer holding another pointer's address"
+    ],
+    correctOptionIndex: 1,
+    difficulty: "HARD",
+    topic: "Memory Safety",
+    explanation: "Dereferencing a dangling pointer causes undefined behavior. Best practice is setting 'ptr = NULL;' right after calling free(ptr)."
+  },
+  {
+    id: 112,
+    language: "C",
+    text: "What is the difference between 'const int *p' and 'int * const p'?",
+    options: [
+      "No difference; both mean identical behavior",
+      "'const int *p' is a pointer to constant integer (value cannot be changed via p), while 'int * const p' is a constant pointer (address stored in p cannot change)",
+      "'const int *p' cannot be reassigned",
+      "'int * const p' points to read-only ROM"
+    ],
+    correctOptionIndex: 1,
+    difficulty: "HARD",
+    topic: "Const Pointers",
+    explanation: "Read declarations right-to-left: 'const int *p' -> pointer to const int; 'int * const p' -> const pointer to int."
+  },
+  {
+    id: 113,
+    language: "C",
+    text: "Why is a 'void *' (void pointer) special in C, and what limitation does it have?",
+    options: [
+      "It can hold any address type, but cannot be directly dereferenced or subjected to pointer arithmetic without casting",
+      "It points only to functions returning void",
+      "It occupies 0 bytes in memory",
+      "It automatically casts itself on dereference"
+    ],
+    correctOptionIndex: 0,
+    difficulty: "HARD",
+    topic: "Generic Pointers",
+    explanation: "void* is a generic pointer (like the return type of malloc). Since the target size is unknown, it must be cast before dereferencing."
+  },
+  {
+    id: 114,
+    language: "C",
+    text: "What does the 'volatile' qualifier tell the C compiler about a variable?",
+    options: [
+      "Store the variable in fast CPU cache forever",
+      "The variable's value may change unexpectedly outside program flow (e.g., hardware registers or ISR), so disable optimization caching on reads/writes",
+      "The variable is thread-safe with mutex locks",
+      "The variable will be freed automatically"
+    ],
+    correctOptionIndex: 1,
+    difficulty: "HARD",
+    topic: "Embedded & Qualifiers",
+    explanation: "'volatile' forces the compiler to reload the variable directly from memory on every access, essential for hardware registers and interrupts."
+  },
+  {
+    id: 115,
+    language: "C",
+    text: "Which declaration correctly defines a pointer to a function taking two ints and returning an int?",
+    options: [
+      "int *funcPtr(int, int);",
+      "int (*funcPtr)(int, int);",
+      "int (funcPtr*)(int, int);",
+      "funcPtr int(int, int);"
+    ],
+    correctOptionIndex: 1,
+    difficulty: "HARD",
+    topic: "Function Pointers",
+    explanation: "Parentheses around (*funcPtr) are crucial; without them, 'int *funcPtr(int, int)' declares a function returning an int*."
+  },
+  {
+    id: 116,
+    language: "C",
+    text: "Why might 'sizeof(struct { char a; int b; char c; })' be 12 bytes instead of 6 bytes on a 32/64-bit architecture?",
+    options: [
+      "Compiler bug in GCC",
+      "Structure memory padding and alignment rules imposed by CPU word boundaries",
+      "Every char takes 4 bytes inside structs",
+      "Structs reserve 6 bytes for metadata"
+    ],
+    correctOptionIndex: 1,
+    difficulty: "HARD",
+    topic: "Memory Alignment",
+    explanation: "Compilers insert padding bytes between struct fields so 4-byte ints sit on 4-byte aligned addresses for fast CPU reads."
+  },
+  {
+    id: 117,
+    language: "C",
+    text: "What is the pitfall of defining '#define SQUARE(x) x * x' and calling 'SQUARE(2 + 3)'?",
+    options: [
+      "It computes 25 cleanly",
+      "It expands literally to '2 + 3 * 2 + 3' which evaluates to 11 due to operator precedence",
+      "Preprocessor throws a syntax error",
+      "Macros cannot accept arithmetic expressions"
+    ],
+    correctOptionIndex: 1,
+    difficulty: "HARD",
+    topic: "Preprocessor Macros",
+    explanation: "Textual macro substitution without parentheses causes precedence bugs. Proper definition is '#define SQUARE(x) ((x) * (x))'."
+  },
+  {
+    id: 118,
+    language: "C",
+    text: "In C File I/O, what does 'fseek(fp, 0, SEEK_END)' followed by 'ftell(fp)' accomplish?",
+    options: [
+      "Deletes all file contents",
+      "Determines the total size of the file in bytes",
+      "Appends a null terminator to the file",
+      "Flushes the OS buffer"
+    ],
+    correctOptionIndex: 1,
+    difficulty: "HARD",
+    topic: "File Handling",
+    explanation: "fseek moves the file pointer to the end, and ftell returns the current byte offset from the beginning."
+  },
+  {
+    id: 119,
+    language: "C",
+    text: "What is the difference between 'int (*p)[5]' and 'int *p[5]' in C?",
+    options: [
+      "Both declare arrays of 5 integers",
+      "'int (*p)[5]' is a single pointer to an array of 5 ints, whereas 'int *p[5]' is an array of 5 int pointers",
+      "'int *p[5]' is invalid syntax",
+      "'int (*p)[5]' allocates 5 elements on heap"
+    ],
+    correctOptionIndex: 1,
+    difficulty: "HARD",
+    topic: "Complex Declarations",
+    explanation: "Operator precedence gives [] higher priority than *. Parentheses make p a pointer to an array of 5 ints."
+  },
+  {
+    id: 120,
+    language: "C",
+    text: "What happens if a recursive function in C has no reachable base case?",
+    options: [
+      "Compiler converts it to an infinite while loop automatically",
+      "It triggers a Stack Overflow / Segmentation Fault as call stack frames exhaust memory",
+      "It returns 0 after 1000 calls",
+      "It shifts execution onto the heap"
+    ],
+    correctOptionIndex: 1,
+    difficulty: "HARD",
+    topic: "Memory Stack & Recursion",
+    explanation: "Each recursive call pushes a new stack frame containing return address and locals, eventually overflowing the fixed call stack."
   }
 ];
 

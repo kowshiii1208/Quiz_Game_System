@@ -2,6 +2,7 @@ import { INITIAL_QUESTIONS, DEFAULT_QUIZ_SETTINGS } from '../data/initialQuestio
 
 const KEYS = {
   QUESTIONS: 'quizmaster_questions_v2',
+  QUESTIONS_MIGRATED_C: 'quizmaster_migrated_c_v3',
   LEADERBOARD: 'quizmaster_leaderboard_v2',
   SETTINGS: 'quizmaster_settings_v2',
   ADMIN_SESSION: 'quizmaster_admin_session_v2',
@@ -14,6 +15,7 @@ const DEFAULT_CUSTOM_QUIZZES = [
     title: 'Aditya University - CSE Object-Oriented C++ Mid-Term Assessment',
     description: 'Official department assessment covering encapsulation, dynamic polymorphism, virtual tables, and memory management.',
     language: 'CPP',
+    difficulty: 'MIXED',
     durationMinutes: 10,
     passingPercentage: 60,
     enableWebcamProctor: true,
@@ -25,17 +27,34 @@ const DEFAULT_CUSTOM_QUIZZES = [
     status: 'ACTIVE'
   },
   {
+    id: 'AU-C-PROG',
+    title: 'Aditya University - C Programming & Pointers Mastery Exam',
+    description: 'Core assessment evaluating pointers, dynamic memory allocation (malloc/calloc), structs, unions, and C memory architecture.',
+    language: 'C',
+    difficulty: 'MEDIUM',
+    durationMinutes: 12,
+    passingPercentage: 60,
+    enableWebcamProctor: true,
+    strictAntiCheat: true,
+    marksPerQuestion: 4,
+    negativeMarks: 1,
+    questionIds: [91, 92, 93, 94, 95, 101, 102, 104, 111, 112],
+    createdAt: new Date().toLocaleDateString(),
+    status: 'ACTIVE'
+  },
+  {
     id: 'AU-JAVA-CORE',
     title: 'Aditya University - Java Enterprise Architecture Examination',
     description: 'Evaluation of JVM memory structures, multithreading synchronizers, OOP inheritance, and collections.',
     language: 'JAVA',
+    difficulty: 'MIXED',
     durationMinutes: 12,
     passingPercentage: 65,
     enableWebcamProctor: true,
     strictAntiCheat: true,
     marksPerQuestion: 4,
     negativeMarks: 1,
-    questionIds: [101, 102, 103, 104, 105],
+    questionIds: [31, 32, 33, 34, 35, 36, 37, 38, 39, 40],
     createdAt: new Date().toLocaleDateString(),
     status: 'ACTIVE'
   }
@@ -48,6 +67,7 @@ export const StorageService = {
       const data = localStorage.getItem(KEYS.QUESTIONS);
       if (!data) {
         localStorage.setItem(KEYS.QUESTIONS, JSON.stringify(INITIAL_QUESTIONS));
+        localStorage.setItem(KEYS.QUESTIONS_MIGRATED_C, 'true');
         return INITIAL_QUESTIONS;
       }
       const parsed = JSON.parse(data);
@@ -61,13 +81,17 @@ export const StorageService = {
         return q;
       });
 
-      // If stored array has fewer questions than initial set, merge missing initial questions
-      if (migrated.length < INITIAL_QUESTIONS.length) {
+      // One-time merge for newly added C Programming questions (v3) or missing defaults
+      const hasMigratedC = localStorage.getItem(KEYS.QUESTIONS_MIGRATED_C) === 'true';
+      if (!hasMigratedC || migrated.length < INITIAL_QUESTIONS.length) {
         const existingIds = new Set(migrated.map(q => q.id));
         const missing = INITIAL_QUESTIONS.filter(q => !existingIds.has(q.id));
-        const combined = [...migrated, ...missing];
-        localStorage.setItem(KEYS.QUESTIONS, JSON.stringify(combined));
-        return combined;
+        localStorage.setItem(KEYS.QUESTIONS_MIGRATED_C, 'true');
+        if (missing.length > 0) {
+          const combined = [...migrated, ...missing];
+          localStorage.setItem(KEYS.QUESTIONS, JSON.stringify(combined));
+          return combined;
+        }
       }
 
       if (needsMigration) {
@@ -124,7 +148,32 @@ export const StorageService = {
         localStorage.setItem(KEYS.CUSTOM_QUIZZES, JSON.stringify(DEFAULT_CUSTOM_QUIZZES));
         return DEFAULT_CUSTOM_QUIZZES;
       }
-      return JSON.parse(data);
+      let parsed = JSON.parse(data);
+      let updated = false;
+
+      // Fix legacy AU-JAVA-CORE questionIds if needed
+      parsed = parsed.map(q => {
+        if (q.id === 'AU-JAVA-CORE' && q.questionIds && q.questionIds[0] === 101) {
+          updated = true;
+          return { ...q, questionIds: [31, 32, 33, 34, 35, 36, 37, 38, 39, 40], difficulty: 'MIXED' };
+        }
+        return q;
+      });
+
+      // Add AU-C-PROG preset once if missing
+      if (!localStorage.getItem('quizmaster_added_c_quiz_v3') && !parsed.some(q => q.id === 'AU-C-PROG')) {
+        const cPreset = DEFAULT_CUSTOM_QUIZZES.find(q => q.id === 'AU-C-PROG');
+        if (cPreset) {
+          parsed = [cPreset, ...parsed];
+          updated = true;
+        }
+        localStorage.setItem('quizmaster_added_c_quiz_v3', 'true');
+      }
+
+      if (updated) {
+        localStorage.setItem(KEYS.CUSTOM_QUIZZES, JSON.stringify(parsed));
+      }
+      return parsed;
     } catch (e) {
       console.error("Failed to load custom quizzes", e);
       return DEFAULT_CUSTOM_QUIZZES;

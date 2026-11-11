@@ -51,20 +51,41 @@ export const FileImporterModal = ({ isOpen, onClose, onImportQuestions, existing
         validateAndSet(formatted);
       } else if (ext === 'csv') {
         const text = await file.text();
-        const lines = text.split('\n').filter(l => l.trim().length > 0);
+        const lines = text.split(/\r?\n/).filter(l => l.trim().length > 0);
         if (lines.length < 2) throw new Error("CSV file must have headers and at least 1 question row.");
+
+        // CSV parser supporting commas inside quoted cells
+        const parseCsvLine = (row) => {
+          const result = [];
+          let current = '';
+          let inQuotes = false;
+          for (let j = 0; j < row.length; j++) {
+            const ch = row[j];
+            if (ch === '"') {
+              inQuotes = !inQuotes;
+            } else if (ch === ',' && !inQuotes) {
+              result.push(current.trim());
+              current = '';
+            } else {
+              current += ch;
+            }
+          }
+          result.push(current.trim());
+          return result;
+        };
 
         const formatted = [];
         // Skip header
         for (let i = 1; i < lines.length; i++) {
-          const cols = lines[i].split(',').map(c => c.trim().replace(/^"(.*)"$/, '$1'));
+          const cols = parseCsvLine(lines[i]);
           if (cols.length >= 6) {
+            const rawLang = (cols[7] || selectedLanguage).toUpperCase();
             formatted.push({
               text: cols[0],
               options: [cols[1], cols[2], cols[3], cols[4]],
-              correctOptionIndex: Number(cols[5]) || 0,
-              difficulty: (cols[6] || 'EASY').toUpperCase(),
-              language: (cols[7] || selectedLanguage).toUpperCase(),
+              correctOptionIndex: Math.min(3, Math.max(0, Number(cols[5]) || 0)),
+              difficulty: ['EASY', 'MEDIUM', 'HARD'].includes((cols[6] || '').toUpperCase()) ? cols[6].toUpperCase() : 'EASY',
+              language: ['C', 'CPP', 'JAVA', 'PYTHON'].includes(rawLang) ? rawLang : selectedLanguage,
               topic: cols[8] || 'Imported Topic',
               explanation: cols[9] || ''
             });
@@ -145,7 +166,7 @@ export const FileImporterModal = ({ isOpen, onClose, onImportQuestions, existing
           options: options.slice(0, 4),
           correctOptionIndex: correctIdx,
           difficulty: ['EASY', 'MEDIUM', 'HARD'].includes(diff) ? diff : 'EASY',
-          language: ['CPP', 'JAVA', 'PYTHON'].includes(lang) ? lang : selectedLanguage,
+          language: ['C', 'CPP', 'JAVA', 'PYTHON'].includes(lang) ? lang : selectedLanguage,
           topic,
           explanation
         });
@@ -170,6 +191,16 @@ export const FileImporterModal = ({ isOpen, onClose, onImportQuestions, existing
   const handleConfirmImport = () => {
     if (parsedQuestions.length === 0) return;
     onImportQuestions(parsedQuestions);
+    setSelectedFile(null);
+    setParsedQuestions([]);
+    setParseError('');
+    onClose();
+  };
+
+  const handleCloseModal = () => {
+    setSelectedFile(null);
+    setParsedQuestions([]);
+    setParseError('');
     onClose();
   };
 
@@ -258,7 +289,7 @@ Explanation: C++ uses colon specifiers for inheritance.
             </div>
           </div>
 
-          <button onClick={onClose} className="p-2 rounded-xl bg-slate-800 text-slate-300">
+          <button onClick={handleCloseModal} className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 transition-all">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -304,6 +335,7 @@ Explanation: C++ uses colon specifiers for inheritance.
             onChange={(e) => setSelectedLanguage(e.target.value)}
             className="w-full px-4 py-2.5 rounded-xl glass-input text-xs bg-slate-900"
           >
+            <option value="C">C Programming (C)</option>
             <option value="CPP">C++ (CPP)</option>
             <option value="JAVA">Java</option>
             <option value="PYTHON">Python</option>

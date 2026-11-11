@@ -17,7 +17,9 @@ import {
   QrCode,
   Code2,
   Terminal,
-  Cpu
+  Cpu,
+  Lock,
+  Binary
 } from 'lucide-react';
 import { StorageService } from '../services/storage';
 
@@ -25,12 +27,13 @@ export const StudentRegistration = ({ onRegisterStudent, availableQuestionsCount
   const [name, setName] = useState('');
   const [rollNumber, setRollNumber] = useState('');
   const [college, setCollege] = useState('Aditya University');
-  const [language, setLanguage] = useState('CPP'); // CPP, JAVA, PYTHON
+  const [language, setLanguage] = useState('CPP'); // C, CPP, JAVA, PYTHON
   const [difficulty, setDifficulty] = useState('EASY');
   const [errors, setErrors] = useState({});
   const [quizCodeInput, setQuizCodeInput] = useState('');
   const [appliedQuiz, setAppliedQuiz] = useState(null);
   const [quizCodeNotice, setQuizCodeNotice] = useState('');
+  const [quizCodeError, setQuizCodeError] = useState('');
 
   // Check URL query param ?quizId=
   React.useEffect(() => {
@@ -42,21 +45,37 @@ export const StudentRegistration = ({ onRegisterStudent, availableQuestionsCount
         if (found) {
           setAppliedQuiz(found);
           setLanguage(found.language || 'CPP');
+          setDifficulty(found.difficulty || 'MIXED');
+        } else {
+          setQuizCodeError(`Assignment code "${qId}" was not found or has expired.`);
         }
       }
     } catch (e) {}
   }, []);
 
   const handleApplyQuizCode = () => {
-    if (!quizCodeInput.trim()) return;
-    const found = StorageService.getCustomQuizById(quizCodeInput.trim());
+    const code = quizCodeInput.trim();
+    if (!code) return;
+    setQuizCodeError('');
+    const found = StorageService.getCustomQuizById(code);
     if (found) {
       setAppliedQuiz(found);
       setLanguage(found.language || 'CPP');
+      setDifficulty(found.difficulty || 'MIXED');
       setQuizCodeNotice(`Quiz "${found.title}" successfully loaded!`);
       setTimeout(() => setQuizCodeNotice(''), 3000);
     } else {
-      alert(`No quiz found with code "${quizCodeInput.trim()}". Please check with your instructor.`);
+      setQuizCodeError(`No quiz found with code "${code}". Check with your instructor.`);
+    }
+  };
+
+  const handleClearQuizCode = () => {
+    setAppliedQuiz(null);
+    setQuizCodeInput('');
+    setQuizCodeError('');
+    setDifficulty('EASY');
+    if (window.location.search.includes('quizId=')) {
+      window.history.replaceState({}, '', window.location.pathname);
     }
   };
 
@@ -68,6 +87,15 @@ export const StudentRegistration = ({ onRegisterStudent, availableQuestionsCount
   ];
 
   const languagesList = [
+    {
+      id: 'C',
+      name: 'C Programming',
+      subtitle: 'Procedural & Memory Architecture',
+      icon: Binary,
+      color: 'from-cyan-500 to-sky-600',
+      badge: 'C99 / C11 Standard',
+      border: 'border-cyan-500/50 bg-cyan-950/20 text-cyan-300'
+    },
     {
       id: 'CPP',
       name: 'C++',
@@ -115,7 +143,7 @@ export const StudentRegistration = ({ onRegisterStudent, availableQuestionsCount
       rollNumber: rollNumber.trim().toUpperCase(),
       college: college.trim(),
       language: appliedQuiz ? (appliedQuiz.language || 'CPP') : language,
-      difficulty: appliedQuiz ? 'MIXED' : difficulty,
+      difficulty: appliedQuiz ? (appliedQuiz.difficulty || 'MIXED') : difficulty,
       quizId: appliedQuiz ? appliedQuiz.id : null,
       quizTitle: appliedQuiz ? appliedQuiz.title : null,
       customQuiz: appliedQuiz || null
@@ -232,8 +260,8 @@ export const StudentRegistration = ({ onRegisterStudent, availableQuestionsCount
                 </span>
                 <button
                   type="button"
-                  onClick={() => setAppliedQuiz(null)}
-                  className="text-[11px] text-slate-400 hover:text-white px-2 py-0.5 rounded bg-slate-800"
+                  onClick={handleClearQuizCode}
+                  className="text-[11px] text-slate-400 hover:text-white px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 transition-all"
                 >
                   Clear / Switch
                 </button>
@@ -258,8 +286,17 @@ export const StudentRegistration = ({ onRegisterStudent, availableQuestionsCount
                 <input
                   type="text"
                   value={quizCodeInput}
-                  onChange={(e) => setQuizCodeInput(e.target.value.toUpperCase())}
-                  placeholder="e.g. AU-OOP-2026 or AU-JAVA-CORE"
+                  onChange={(e) => {
+                    setQuizCodeInput(e.target.value.toUpperCase());
+                    setQuizCodeError('');
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleApplyQuizCode();
+                    }
+                  }}
+                  placeholder="e.g. AU-C-PROG, AU-OOP-2026, or AU-JAVA-CORE"
                   className="flex-1 px-3 py-2 rounded-xl glass-input text-xs font-mono uppercase"
                 />
                 <button
@@ -272,6 +309,9 @@ export const StudentRegistration = ({ onRegisterStudent, availableQuestionsCount
               </div>
               {quizCodeNotice && (
                 <p className="text-[11px] text-emerald-400 font-medium">{quizCodeNotice}</p>
+              )}
+              {quizCodeError && (
+                <p className="text-[11px] text-rose-400 font-medium">{quizCodeError}</p>
               )}
             </div>
           )}
@@ -347,115 +387,141 @@ export const StudentRegistration = ({ onRegisterStudent, availableQuestionsCount
             </div>
           </div>
 
-          {/* Step 2: Language Selection Track */}
-          <div className="pt-4 border-t border-slate-800/80 space-y-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-lg font-bold text-white flex items-center space-x-2">
-                  <Code2 className="w-5 h-5 text-indigo-400" />
-                  <span>2. Select Programming Language</span>
-                </h3>
-                <p className="text-xs text-slate-400">Choose test subject track</p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-3 gap-3">
-              {languagesList.map((lang) => {
-                const Icon = lang.icon;
-                const isSelected = language === lang.id;
-                return (
-                  <button
-                    key={lang.id}
-                    type="button"
-                    onClick={() => setLanguage(lang.id)}
-                    className={`p-3.5 rounded-2xl border text-left transition-all duration-200 flex flex-col justify-between ${
-                      isSelected
-                        ? `${lang.border} ring-2 ring-indigo-500/40 shadow-lg scale-[1.02]`
-                        : 'glass-card border-slate-800 text-slate-400 hover:border-slate-700 hover:text-slate-200'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between w-full mb-2">
-                      <div className={`p-2 rounded-xl bg-gradient-to-br ${lang.color} text-white shadow-md`}>
-                        <Icon className="w-5 h-5" />
-                      </div>
-                      {isSelected && (
-                        <div className="w-4 h-4 rounded-full bg-indigo-500 text-white flex items-center justify-center text-[10px]">
-                          ✓
-                        </div>
-                      )}
-                    </div>
-                    <div>
-                      <h4 className="font-extrabold text-white text-sm">{lang.name}</h4>
-                      <p className="text-[10px] text-slate-400 line-clamp-1">{lang.badge}</p>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Step 3: Quiz Difficulty Selection */}
-          <div className="pt-4 border-t border-slate-800/80 space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-lg font-bold text-white flex items-center space-x-2">
-                  <Layers className="w-5 h-5 text-indigo-400" />
-                  <span>3. Difficulty Level</span>
-                </h3>
-                <p className="text-xs text-slate-400">Select difficulty tier</p>
-              </div>
-              <span className="text-xs font-bold text-amber-400 bg-amber-500/10 border border-amber-500/30 px-3 py-1 rounded-full">
-                {availableQuestionsCount} Questions Available
-              </span>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-              {difficultyLevels.map((lvl) => {
-                const isSelected = difficulty === lvl.id;
-                const IconComp = lvl.icon;
-
-                return (
-                  <div
-                    key={lvl.id}
-                    onClick={() => setDifficulty(lvl.id)}
-                    className={`cursor-pointer rounded-2xl p-4 border transition-all duration-200 relative overflow-hidden flex flex-col justify-between ${
-                      isSelected 
-                        ? lvl.activeBorder 
-                        : 'glass-card border-slate-800/80 opacity-80 hover:opacity-100'
-                    }`}
-                  >
-                    <div>
-                      <div className="flex items-center justify-between mb-2">
-                        <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-lg border flex items-center space-x-1 ${lvl.badgeColor}`}>
-                          <IconComp className={`w-3.5 h-3.5 ${lvl.iconColor}`} />
-                          <span>{lvl.id}</span>
-                        </span>
-
-                        <div className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 ${
-                          isSelected ? 'border-indigo-400 bg-indigo-500' : 'border-slate-700'
-                        }`}>
-                          {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
-                        </div>
-                      </div>
-
-                      <p className="text-xs text-slate-300 leading-relaxed font-normal mb-3">
-                        {lvl.desc}
-                      </p>
-                    </div>
-
-                    <div className="flex flex-wrap gap-1 border-t border-slate-800/60 pt-2">
-                      {lvl.topics.map((tp, idx) => (
-                        <span key={idx} className="text-[10px] bg-slate-900 text-slate-400 px-2 py-0.5 rounded border border-slate-800">
-                          {tp}
-                        </span>
-                      ))}
-                    </div>
-
+          {/* Step 2 & 3: Hidden & Locked when Official Assignment / QR Code is Applied */}
+          {appliedQuiz ? (
+            <div className="pt-4 border-t border-slate-800/80 animate-slide-up">
+              <div className="p-4 rounded-2xl bg-slate-900/80 border border-indigo-500/30 flex items-center justify-between gap-4">
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 rounded-xl bg-indigo-500/15 border border-indigo-500/30 flex items-center justify-center text-indigo-400 shrink-0">
+                    <Lock className="w-5 h-5" />
                   </div>
-                );
-              })}
+                  <div>
+                    <h4 className="text-xs font-bold text-white uppercase tracking-wider">
+                      Track & Difficulty Fixed by Instructor
+                    </h4>
+                    <p className="text-[11px] text-slate-400 mt-0.5">
+                      Subject: <strong className="text-indigo-300">{currentLangObj?.name || appliedQuiz.language}</strong> • Difficulty: <strong className="text-amber-300">{appliedQuiz.difficulty || 'MIXED'}</strong> • Questions: <strong className="text-emerald-300">{appliedQuiz.questionIds?.length || 10}</strong>
+                    </p>
+                  </div>
+                </div>
+                <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-indigo-500/15 text-indigo-300 border border-indigo-500/30 shrink-0">
+                  LOCKED
+                </span>
+              </div>
             </div>
-          </div>
+          ) : (
+            <>
+              {/* Step 2: Language Selection Track */}
+              <div className="pt-4 border-t border-slate-800/80 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-lg font-bold text-white flex items-center space-x-2">
+                      <Code2 className="w-5 h-5 text-indigo-400" />
+                      <span>2. Select Programming Language</span>
+                    </h3>
+                    <p className="text-xs text-slate-400">Choose test subject track</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  {languagesList.map((lang) => {
+                    const Icon = lang.icon;
+                    const isSelected = language === lang.id;
+                    return (
+                      <button
+                        key={lang.id}
+                        type="button"
+                        onClick={() => setLanguage(lang.id)}
+                        className={`p-3.5 rounded-2xl border text-left transition-all duration-200 flex flex-col justify-between ${
+                          isSelected
+                            ? `${lang.border} ring-2 ring-indigo-500/40 shadow-lg scale-[1.02]`
+                            : 'glass-card border-slate-800 text-slate-400 hover:border-slate-700 hover:text-slate-200'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between w-full mb-2">
+                          <div className={`p-2 rounded-xl bg-gradient-to-br ${lang.color} text-white shadow-md`}>
+                            <Icon className="w-5 h-5" />
+                          </div>
+                          {isSelected && (
+                            <div className="w-4 h-4 rounded-full bg-indigo-500 text-white flex items-center justify-center text-[10px]">
+                              ✓
+                            </div>
+                          )}
+                        </div>
+                        <div>
+                          <h4 className="font-extrabold text-white text-sm">{lang.name}</h4>
+                          <p className="text-[10px] text-slate-400 line-clamp-1">{lang.badge}</p>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Step 3: Quiz Difficulty Selection */}
+              <div className="pt-4 border-t border-slate-800/80 space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-lg font-bold text-white flex items-center space-x-2">
+                      <Layers className="w-5 h-5 text-indigo-400" />
+                      <span>3. Difficulty Level</span>
+                    </h3>
+                    <p className="text-xs text-slate-400">Select difficulty tier</p>
+                  </div>
+                  <span className="text-xs font-bold text-amber-400 bg-amber-500/10 border border-amber-500/30 px-3 py-1 rounded-full">
+                    {availableQuestionsCount} Questions Available
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                  {difficultyLevels.map((lvl) => {
+                    const isSelected = difficulty === lvl.id;
+                    const IconComp = lvl.icon;
+
+                    return (
+                      <div
+                        key={lvl.id}
+                        onClick={() => setDifficulty(lvl.id)}
+                        className={`cursor-pointer rounded-2xl p-4 border transition-all duration-200 relative overflow-hidden flex flex-col justify-between ${
+                          isSelected 
+                            ? lvl.activeBorder 
+                            : 'glass-card border-slate-800/80 opacity-80 hover:opacity-100'
+                        }`}
+                      >
+                        <div>
+                          <div className="flex items-center justify-between mb-2">
+                            <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-lg border flex items-center space-x-1 ${lvl.badgeColor}`}>
+                              <IconComp className={`w-3.5 h-3.5 ${lvl.iconColor}`} />
+                              <span>{lvl.id}</span>
+                            </span>
+
+                            <div className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 ${
+                              isSelected ? 'border-indigo-400 bg-indigo-500' : 'border-slate-700'
+                            }`}>
+                              {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                            </div>
+                          </div>
+
+                          <p className="text-xs text-slate-300 leading-relaxed font-normal mb-3">
+                            {lvl.desc}
+                          </p>
+                        </div>
+
+                        <div className="flex flex-wrap gap-1 border-t border-slate-800/60 pt-2">
+                          {lvl.topics.map((tp, idx) => (
+                            <span key={idx} className="text-[10px] bg-slate-900 text-slate-400 px-2 py-0.5 rounded border border-slate-800">
+                              {tp}
+                            </span>
+                          ))}
+                        </div>
+
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </>
+          )}
 
           <div className="pt-2">
             <button
@@ -522,7 +588,7 @@ export const StudentRegistration = ({ onRegisterStudent, availableQuestionsCount
 
                 <div className="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800/80">
                   <span className="text-[10px] text-slate-500 font-semibold block uppercase tracking-wider">Difficulty Level</span>
-                  <span className="font-extrabold text-emerald-400">{difficulty}</span>
+                  <span className="font-extrabold text-emerald-400">{appliedQuiz ? (appliedQuiz.difficulty || 'MIXED') : difficulty}</span>
                 </div>
               </div>
 

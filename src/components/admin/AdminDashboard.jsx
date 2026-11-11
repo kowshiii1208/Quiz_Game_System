@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   ShieldCheck, 
   HelpCircle, 
@@ -20,7 +20,8 @@ import {
   Building2,
   Sparkles,
   QrCode,
-  FileSpreadsheet
+  FileSpreadsheet,
+  LogOut
 } from 'lucide-react';
 import { FileImporterModal } from './FileImporterModal';
 import { QuizCreatorTab } from './QuizCreatorTab';
@@ -36,9 +37,10 @@ export const AdminDashboard = ({
   onSaveSettings, 
   onDeleteLeaderboardEntry,
   onClearLeaderboard,
+  onLogout,
   onClose 
 }) => {
-  const [activeTab, setActiveTab] = useState('QUESTIONS'); // QUESTIONS, LEADERBOARD, SETTINGS, CERT_TEMPLATE, ANALYTICS
+  const [activeTab, setActiveTab] = useState('QUIZ_ASSIGNMENTS'); // QUIZ_ASSIGNMENTS, QUESTIONS, LEADERBOARD, SETTINGS, CERT_TEMPLATE, ANALYTICS
   
   // Question Filter
   const [questionSearch, setQuestionSearch] = useState('');
@@ -58,9 +60,13 @@ export const AdminDashboard = ({
   const [qTopic, setQTopic] = useState('');
   const [qExplanation, setQExplanation] = useState('');
 
-  // Settings state
+  // Settings state synced with parent
   const [localSettings, setLocalSettings] = useState(settings);
   const [settingsSavedMessage, setSettingsSavedMessage] = useState(false);
+
+  useEffect(() => {
+    setLocalSettings(settings);
+  }, [settings]);
 
   // Filtered Questions
   const filteredQuestions = questions.filter(q => {
@@ -208,13 +214,26 @@ export const AdminDashboard = ({
             </div>
           </div>
 
-          <button
-            onClick={onClose}
-            className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold flex items-center space-x-2 transition-all self-end sm:self-auto"
-          >
-            <X className="w-4 h-4" />
-            <span>Close Admin Panel</span>
-          </button>
+          <div className="flex items-center space-x-2 self-end sm:self-auto">
+            {onLogout && (
+              <button
+                onClick={onLogout}
+                className="px-3.5 py-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 text-xs font-semibold flex items-center space-x-1.5 transition-all"
+                title="Logout of Admin Session"
+              >
+                <LogOut className="w-4 h-4" />
+                <span>Logout</span>
+              </button>
+            )}
+
+            <button
+              onClick={onClose}
+              className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold flex items-center space-x-2 transition-all"
+            >
+              <X className="w-4 h-4" />
+              <span>Close Panel</span>
+            </button>
+          </div>
         </div>
 
         {/* Tab Navigation */}
@@ -256,7 +275,7 @@ export const AdminDashboard = ({
           
           {/* TAB 0: CUSTOM QUIZ ASSIGNMENTS & QR CODES */}
           {activeTab === 'QUIZ_ASSIGNMENTS' && (
-            <QuizCreatorTab questions={questions} leaderboard={leaderboard} />
+            <QuizCreatorTab questions={questions} leaderboard={leaderboard} onSaveQuestions={onSaveQuestions} />
           )}
 
           {/* TAB 1: QUESTION BANK CRUD */}
@@ -284,6 +303,7 @@ export const AdminDashboard = ({
                     className="py-2 px-3 rounded-xl glass-input text-xs bg-slate-900"
                   >
                     <option value="ALL">All Languages</option>
+                    <option value="C">C Programming</option>
                     <option value="CPP">C++</option>
                     <option value="JAVA">Java</option>
                     <option value="PYTHON">Python</option>
@@ -311,7 +331,11 @@ export const AdminDashboard = ({
                   </button>
 
                   <button
-                    onClick={onResetQuestions}
+                    onClick={() => {
+                      if (confirm("Reset Question Bank to the default 120 questions? Custom imported questions will be replaced.")) {
+                        onResetQuestions();
+                      }
+                    }}
                     className="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold flex items-center space-x-1.5 transition-all"
                   >
                     <RotateCcw className="w-4 h-4 text-amber-400" />
@@ -414,7 +438,7 @@ export const AdminDashboard = ({
                     <label className="text-xs font-bold text-slate-300 uppercase">Mentor Signature Name</label>
                     <input
                       type="text"
-                      value={localSettings.mentorName || 'SK. VAHIDA'}
+                      value={localSettings.mentorName ?? 'SK. VAHIDA'}
                       onChange={(e) => setLocalSettings({ ...localSettings, mentorName: e.target.value })}
                       placeholder="e.g. SK. Vahida"
                       className="w-full px-4 py-2.5 rounded-xl glass-input text-xs"
@@ -425,7 +449,7 @@ export const AdminDashboard = ({
                     <label className="text-xs font-bold text-slate-300 uppercase">Full Name & Qualifications</label>
                     <input
                       type="text"
-                      value={localSettings.mentorTitle || 'SK. VAHIDA, M.Tech(Ph.D)'}
+                      value={localSettings.mentorTitle ?? 'SK. VAHIDA, M.Tech(Ph.D)'}
                       onChange={(e) => setLocalSettings({ ...localSettings, mentorTitle: e.target.value })}
                       placeholder="e.g. SK. VAHIDA, M.Tech(Ph.D)"
                       className="w-full px-4 py-2.5 rounded-xl glass-input text-xs"
@@ -436,7 +460,7 @@ export const AdminDashboard = ({
                     <label className="text-xs font-bold text-slate-300 uppercase">Designation / Role</label>
                     <input
                       type="text"
-                      value={localSettings.mentorRole || 'Assistant Professor & Project Mentor'}
+                      value={localSettings.mentorRole ?? 'Assistant Professor & Project Mentor'}
                       onChange={(e) => setLocalSettings({ ...localSettings, mentorRole: e.target.value })}
                       placeholder="e.g. Assistant Professor & Project Mentor"
                       className="w-full px-4 py-2.5 rounded-xl glass-input text-xs"
@@ -457,7 +481,7 @@ export const AdminDashboard = ({
                     <label className="text-xs font-bold text-slate-300 uppercase">HOD Signature Name</label>
                     <input
                       type="text"
-                      value={localSettings.hodName || 'Dr. K. Srinivasa Rao'}
+                      value={localSettings.hodName ?? 'Dr. K. Srinivasa Rao'}
                       onChange={(e) => setLocalSettings({ ...localSettings, hodName: e.target.value })}
                       placeholder="e.g. Dr. K. Srinivasa Rao"
                       className="w-full px-4 py-2.5 rounded-xl glass-input text-xs"
@@ -468,7 +492,7 @@ export const AdminDashboard = ({
                     <label className="text-xs font-bold text-slate-300 uppercase">Full Name & Degrees</label>
                     <input
                       type="text"
-                      value={localSettings.hodTitle || 'Dr. K. Srinivasa Rao, Ph.D'}
+                      value={localSettings.hodTitle ?? 'Dr. K. Srinivasa Rao, Ph.D'}
                       onChange={(e) => setLocalSettings({ ...localSettings, hodTitle: e.target.value })}
                       placeholder="e.g. Dr. K. Srinivasa Rao, Ph.D"
                       className="w-full px-4 py-2.5 rounded-xl glass-input text-xs"
@@ -479,7 +503,7 @@ export const AdminDashboard = ({
                     <label className="text-xs font-bold text-slate-300 uppercase">Designation / Role</label>
                     <input
                       type="text"
-                      value={localSettings.hodRole || 'Head of Department (CSE)'}
+                      value={localSettings.hodRole ?? 'Head of Department (CSE)'}
                       onChange={(e) => setLocalSettings({ ...localSettings, hodRole: e.target.value })}
                       placeholder="e.g. Head of Department (CSE)"
                       className="w-full px-4 py-2.5 rounded-xl glass-input text-xs"
@@ -500,7 +524,7 @@ export const AdminDashboard = ({
                     <label className="text-xs font-bold text-slate-300 uppercase">University Name</label>
                     <input
                       type="text"
-                      value={localSettings.collegeName || 'ADITYA UNIVERSITY'}
+                      value={localSettings.collegeName ?? 'ADITYA UNIVERSITY'}
                       onChange={(e) => setLocalSettings({ ...localSettings, collegeName: e.target.value })}
                       className="w-full px-4 py-2.5 rounded-xl glass-input text-xs"
                     />
@@ -510,7 +534,7 @@ export const AdminDashboard = ({
                     <label className="text-xs font-bold text-slate-300 uppercase">Department Name</label>
                     <input
                       type="text"
-                      value={localSettings.departmentName || 'DEPARTMENT OF COMPUTER SCIENCE & ENGINEERING'}
+                      value={localSettings.departmentName ?? 'DEPARTMENT OF COMPUTER SCIENCE & ENGINEERING'}
                       onChange={(e) => setLocalSettings({ ...localSettings, departmentName: e.target.value })}
                       className="w-full px-4 py-2.5 rounded-xl glass-input text-xs"
                     />
@@ -520,7 +544,7 @@ export const AdminDashboard = ({
                     <label className="text-xs font-bold text-slate-300 uppercase">Award Body Sentence ("This is to certify that...")</label>
                     <textarea
                       rows="2"
-                      value={localSettings.certBodyText || 'for successfully passing the official online assessment in'}
+                      value={localSettings.certBodyText ?? 'for successfully passing the official online assessment in'}
                       onChange={(e) => setLocalSettings({ ...localSettings, certBodyText: e.target.value })}
                       className="w-full px-4 py-2.5 rounded-xl glass-input text-xs"
                     />
@@ -602,7 +626,11 @@ export const AdminDashboard = ({
                   </button>
 
                   <button
-                    onClick={onClearLeaderboard}
+                    onClick={() => {
+                      if (confirm("Permanently clear ALL leaderboard records? This cannot be undone.")) {
+                        onClearLeaderboard();
+                      }
+                    }}
                     className="px-4 py-2 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 text-xs font-semibold flex items-center space-x-1.5 transition-all"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -665,8 +693,8 @@ export const AdminDashboard = ({
                     type="number"
                     min="1"
                     max="30"
-                    value={localSettings.questionsPerRound}
-                    onChange={(e) => setLocalSettings({ ...localSettings, questionsPerRound: parseInt(e.target.value) })}
+                    value={localSettings.questionsPerRound ?? 10}
+                    onChange={(e) => setLocalSettings({ ...localSettings, questionsPerRound: parseInt(e.target.value) || 1 })}
                     className="w-full px-4 py-3 rounded-xl glass-input text-sm"
                   />
                 </div>
@@ -677,8 +705,8 @@ export const AdminDashboard = ({
                     type="number"
                     min="10"
                     max="120"
-                    value={localSettings.timePerQuestionSec}
-                    onChange={(e) => setLocalSettings({ ...localSettings, timePerQuestionSec: parseInt(e.target.value) })}
+                    value={localSettings.timePerQuestionSec ?? 30}
+                    onChange={(e) => setLocalSettings({ ...localSettings, timePerQuestionSec: parseInt(e.target.value) || 10 })}
                     className="w-full px-4 py-3 rounded-xl glass-input text-sm"
                   />
                 </div>
@@ -689,8 +717,8 @@ export const AdminDashboard = ({
                     type="number"
                     min="1"
                     max="10"
-                    value={localSettings.marksPerQuestion}
-                    onChange={(e) => setLocalSettings({ ...localSettings, marksPerQuestion: parseInt(e.target.value) })}
+                    value={localSettings.marksPerQuestion ?? 4}
+                    onChange={(e) => setLocalSettings({ ...localSettings, marksPerQuestion: parseInt(e.target.value) || 1 })}
                     className="w-full px-4 py-3 rounded-xl glass-input text-sm"
                   />
                 </div>
@@ -701,8 +729,8 @@ export const AdminDashboard = ({
                     type="number"
                     min="0"
                     max="5"
-                    value={localSettings.negativeMarks}
-                    onChange={(e) => setLocalSettings({ ...localSettings, negativeMarks: parseInt(e.target.value) })}
+                    value={localSettings.negativeMarks ?? 1}
+                    onChange={(e) => setLocalSettings({ ...localSettings, negativeMarks: parseInt(e.target.value) || 0 })}
                     className="w-full px-4 py-3 rounded-xl glass-input text-sm"
                   />
                 </div>
@@ -713,7 +741,7 @@ export const AdminDashboard = ({
                 <label className="flex items-center space-x-3 cursor-pointer">
                   <input
                     type="checkbox"
-                    checked={localSettings.allowNegativeMarking}
+                    checked={Boolean(localSettings.allowNegativeMarking)}
                     onChange={(e) => setLocalSettings({ ...localSettings, allowNegativeMarking: e.target.checked })}
                     className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500"
                   />
@@ -723,12 +751,33 @@ export const AdminDashboard = ({
                 <label className="flex items-center space-x-3 cursor-pointer">
                   <input
                     type="checkbox"
-                    checked={localSettings.strictAntiCheat}
+                    checked={Boolean(localSettings.strictAntiCheat)}
                     onChange={(e) => setLocalSettings({ ...localSettings, strictAntiCheat: e.target.checked })}
                     className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500"
                   />
                   <span className="text-sm font-semibold text-slate-200">Enable Strict Anti-Cheating Protection (Auto-disqualify on tab switch)</span>
                 </label>
+
+                <label className="flex items-center space-x-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={localSettings.enableWebcamProctor !== false}
+                    onChange={(e) => setLocalSettings({ ...localSettings, enableWebcamProctor: e.target.checked })}
+                    className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500"
+                  />
+                  <span className="text-sm font-semibold text-slate-200">Enable AI Webcam Optical Proctoring HUD</span>
+                </label>
+
+                <div className="pt-3 border-t border-slate-800/80 space-y-1.5">
+                  <label className="text-xs font-bold text-slate-300 uppercase">Custom Faculty Admin Passkey (Optional)</label>
+                  <input
+                    type="text"
+                    value={localSettings.adminPassword ?? ''}
+                    onChange={(e) => setLocalSettings({ ...localSettings, adminPassword: e.target.value })}
+                    placeholder="Leave blank to use default passkey (admin123)"
+                    className="w-full px-4 py-2.5 rounded-xl glass-input text-xs"
+                  />
+                </div>
               </div>
 
               {settingsSavedMessage && (
@@ -795,6 +844,7 @@ export const AdminDashboard = ({
                     onChange={(e) => setQLanguage(e.target.value)}
                     className="w-full px-4 py-3 rounded-xl glass-input text-sm bg-slate-900"
                   >
+                    <option value="C">C Programming</option>
                     <option value="CPP">C++</option>
                     <option value="JAVA">Java</option>
                     <option value="PYTHON">Python</option>
@@ -853,7 +903,7 @@ export const AdminDashboard = ({
                 <label className="text-xs font-bold text-slate-300">Correct Option</label>
                 <select
                   value={qCorrect}
-                  onChange={(e) => setQCorrect(e.target.value)}
+                  onChange={(e) => setQCorrect(parseInt(e.target.value))}
                   className="w-full px-4 py-3 rounded-xl glass-input text-sm bg-slate-900"
                 >
                   <option value={0}>Option [A]</option>
