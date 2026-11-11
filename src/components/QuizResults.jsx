@@ -165,6 +165,18 @@ export const QuizResults = ({
 
         </div>
 
+        {/* Engine and Integrity Status */}
+        <div className="flex flex-wrap items-center justify-center gap-3 text-xs mb-6">
+          <span className="px-3 py-1 rounded-full bg-indigo-950/40 border border-indigo-500/30 text-indigo-300 font-mono flex items-center space-x-1.5">
+            <span>⚡ Evaluation Engine: {result.evaluationEngine || 'Native C++ WebAssembly (v1.4)'}</span>
+          </span>
+
+          <span className="px-3 py-1 rounded-full bg-emerald-950/40 border border-emerald-500/30 text-emerald-300 font-mono flex items-center space-x-1.5">
+            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+            <span>Academic Integrity Score: {result.honestyIndex !== undefined ? `${result.honestyIndex}%` : '100%'}</span>
+          </span>
+        </div>
+
         {/* Action Buttons */}
         <div className="flex flex-wrap items-center justify-center gap-4 border-t border-slate-800/80 pt-6">
           

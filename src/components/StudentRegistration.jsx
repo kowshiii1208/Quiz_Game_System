@@ -19,6 +19,7 @@ import {
   Terminal,
   Cpu
 } from 'lucide-react';
+import { StorageService } from '../services/storage';
 
 export const StudentRegistration = ({ onRegisterStudent, availableQuestionsCount }) => {
   const [name, setName] = useState('');
@@ -27,6 +28,37 @@ export const StudentRegistration = ({ onRegisterStudent, availableQuestionsCount
   const [language, setLanguage] = useState('CPP'); // CPP, JAVA, PYTHON
   const [difficulty, setDifficulty] = useState('EASY');
   const [errors, setErrors] = useState({});
+  const [quizCodeInput, setQuizCodeInput] = useState('');
+  const [appliedQuiz, setAppliedQuiz] = useState(null);
+  const [quizCodeNotice, setQuizCodeNotice] = useState('');
+
+  // Check URL query param ?quizId=
+  React.useEffect(() => {
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      const qId = urlParams.get('quizId');
+      if (qId) {
+        const found = StorageService.getCustomQuizById(qId);
+        if (found) {
+          setAppliedQuiz(found);
+          setLanguage(found.language || 'CPP');
+        }
+      }
+    } catch (e) {}
+  }, []);
+
+  const handleApplyQuizCode = () => {
+    if (!quizCodeInput.trim()) return;
+    const found = StorageService.getCustomQuizById(quizCodeInput.trim());
+    if (found) {
+      setAppliedQuiz(found);
+      setLanguage(found.language || 'CPP');
+      setQuizCodeNotice(`Quiz "${found.title}" successfully loaded!`);
+      setTimeout(() => setQuizCodeNotice(''), 3000);
+    } else {
+      alert(`No quiz found with code "${quizCodeInput.trim()}". Please check with your instructor.`);
+    }
+  };
 
   const collegePresets = [
     'Aditya University',
@@ -82,8 +114,11 @@ export const StudentRegistration = ({ onRegisterStudent, availableQuestionsCount
       name: name.trim(),
       rollNumber: rollNumber.trim().toUpperCase(),
       college: college.trim(),
-      language,
-      difficulty
+      language: appliedQuiz ? (appliedQuiz.language || 'CPP') : language,
+      difficulty: appliedQuiz ? 'MIXED' : difficulty,
+      quizId: appliedQuiz ? appliedQuiz.id : null,
+      quizTitle: appliedQuiz ? appliedQuiz.title : null,
+      customQuiz: appliedQuiz || null
     });
   };
 
@@ -187,6 +222,59 @@ export const StudentRegistration = ({ onRegisterStudent, availableQuestionsCount
             </h2>
             <p className="text-xs text-slate-400">Information will be printed on your official certificate</p>
           </div>
+
+          {/* Official Custom Assignment / QR Detected Banner */}
+          {appliedQuiz ? (
+            <div className="p-4 rounded-2xl bg-indigo-950/40 border border-indigo-500/50 space-y-2 animate-slide-up">
+              <div className="flex items-center justify-between">
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                  OFFICIAL ASSIGNMENT CODE: {appliedQuiz.id}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setAppliedQuiz(null)}
+                  className="text-[11px] text-slate-400 hover:text-white px-2 py-0.5 rounded bg-slate-800"
+                >
+                  Clear / Switch
+                </button>
+              </div>
+              <h4 className="text-sm font-bold text-white">{appliedQuiz.title}</h4>
+              <p className="text-xs text-slate-400">
+                Duration: <strong className="text-slate-200">{appliedQuiz.durationMinutes || 15} Mins</strong> • 
+                Pass Benchmark: <strong className="text-slate-200">{appliedQuiz.passingPercentage || 60}%</strong> • 
+                Proctoring: <strong className="text-emerald-400">Enforced</strong>
+              </p>
+            </div>
+          ) : (
+            <div className="p-3.5 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-300 flex items-center space-x-1.5">
+                  <QrCode className="w-3.5 h-3.5 text-indigo-400" />
+                  <span>Have an Official Assignment Code / Scanned QR?</span>
+                </span>
+                <span className="text-[10px] text-slate-500">Optional</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <input
+                  type="text"
+                  value={quizCodeInput}
+                  onChange={(e) => setQuizCodeInput(e.target.value.toUpperCase())}
+                  placeholder="e.g. AU-OOP-2026 or AU-JAVA-CORE"
+                  className="flex-1 px-3 py-2 rounded-xl glass-input text-xs font-mono uppercase"
+                />
+                <button
+                  type="button"
+                  onClick={handleApplyQuizCode}
+                  className="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all shrink-0"
+                >
+                  Apply Code
+                </button>
+              </div>
+              {quizCodeNotice && (
+                <p className="text-[11px] text-emerald-400 font-medium">{quizCodeNotice}</p>
+              )}
+            </div>
+          )}
 
           {/* Input: Candidate Name */}
           <div className="space-y-1.5">

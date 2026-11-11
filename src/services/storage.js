@@ -4,8 +4,42 @@ const KEYS = {
   QUESTIONS: 'quizmaster_questions_v2',
   LEADERBOARD: 'quizmaster_leaderboard_v2',
   SETTINGS: 'quizmaster_settings_v2',
-  ADMIN_SESSION: 'quizmaster_admin_session_v2'
+  ADMIN_SESSION: 'quizmaster_admin_session_v2',
+  CUSTOM_QUIZZES: 'quizmaster_custom_quizzes_v2'
 };
+
+const DEFAULT_CUSTOM_QUIZZES = [
+  {
+    id: 'AU-OOP-2026',
+    title: 'Aditya University - CSE Object-Oriented C++ Mid-Term Assessment',
+    description: 'Official department assessment covering encapsulation, dynamic polymorphism, virtual tables, and memory management.',
+    language: 'CPP',
+    durationMinutes: 10,
+    passingPercentage: 60,
+    enableWebcamProctor: true,
+    strictAntiCheat: true,
+    marksPerQuestion: 4,
+    negativeMarks: 1,
+    questionIds: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+    createdAt: new Date().toLocaleDateString(),
+    status: 'ACTIVE'
+  },
+  {
+    id: 'AU-JAVA-CORE',
+    title: 'Aditya University - Java Enterprise Architecture Examination',
+    description: 'Evaluation of JVM memory structures, multithreading synchronizers, OOP inheritance, and collections.',
+    language: 'JAVA',
+    durationMinutes: 12,
+    passingPercentage: 65,
+    enableWebcamProctor: true,
+    strictAntiCheat: true,
+    marksPerQuestion: 4,
+    negativeMarks: 1,
+    questionIds: [101, 102, 103, 104, 105],
+    createdAt: new Date().toLocaleDateString(),
+    status: 'ACTIVE'
+  }
+];
 
 export const StorageService = {
   // Questions Management
@@ -82,6 +116,64 @@ export const StorageService = {
     return updated;
   },
 
+  // Custom Quizzes / Assignments Management
+  getCustomQuizzes: () => {
+    try {
+      const data = localStorage.getItem(KEYS.CUSTOM_QUIZZES);
+      if (!data) {
+        localStorage.setItem(KEYS.CUSTOM_QUIZZES, JSON.stringify(DEFAULT_CUSTOM_QUIZZES));
+        return DEFAULT_CUSTOM_QUIZZES;
+      }
+      return JSON.parse(data);
+    } catch (e) {
+      console.error("Failed to load custom quizzes", e);
+      return DEFAULT_CUSTOM_QUIZZES;
+    }
+  },
+
+  saveCustomQuizzes: (quizzes) => {
+    try {
+      localStorage.setItem(KEYS.CUSTOM_QUIZZES, JSON.stringify(quizzes));
+    } catch (e) {
+      console.error("Failed to save custom quizzes", e);
+    }
+  },
+
+  addCustomQuiz: (newQuiz) => {
+    const quizzes = StorageService.getCustomQuizzes();
+    const id = newQuiz.id || `AU-QUIZ-${Math.floor(1000 + Math.random() * 9000)}`;
+    const fullQuiz = {
+      ...newQuiz,
+      id: id.toUpperCase(),
+      createdAt: new Date().toLocaleDateString(),
+      status: newQuiz.status || 'ACTIVE'
+    };
+    const updated = [fullQuiz, ...quizzes];
+    StorageService.saveCustomQuizzes(updated);
+    return updated;
+  },
+
+  updateCustomQuiz: (updatedQuiz) => {
+    const quizzes = StorageService.getCustomQuizzes();
+    const updated = quizzes.map(q => q.id === updatedQuiz.id ? updatedQuiz : q);
+    StorageService.saveCustomQuizzes(updated);
+    return updated;
+  },
+
+  deleteCustomQuiz: (id) => {
+    const quizzes = StorageService.getCustomQuizzes();
+    const updated = quizzes.filter(q => q.id !== id);
+    StorageService.saveCustomQuizzes(updated);
+    return updated;
+  },
+
+  getCustomQuizById: (id) => {
+    if (!id) return null;
+    const quizzes = StorageService.getCustomQuizzes();
+    const normalized = id.trim().toUpperCase();
+    return quizzes.find(q => q.id.toUpperCase() === normalized) || null;
+  },
+
   // Leaderboard Management
   getLeaderboard: () => {
     try {
@@ -99,7 +191,10 @@ export const StorageService = {
       const newRecord = {
         ...record,
         id: 'REC_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
-        timestamp: new Date().toLocaleString()
+        timestamp: new Date().toLocaleString(),
+        quizId: record.quizId || null,
+        quizTitle: record.quizTitle || null,
+        certSignature: record.certSignature || null
       };
       const updated = [newRecord, ...leaderboard];
       localStorage.setItem(KEYS.LEADERBOARD, JSON.stringify(updated));

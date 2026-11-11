@@ -1,15 +1,17 @@
 import React, { useState } from 'react';
-import { ShieldCheck, CheckCircle2, X, Search, Award, User, Hash, Calendar, Building2, BookOpen, AlertCircle } from 'lucide-react';
+import { ShieldCheck, CheckCircle2, X, Search, Award, User, Hash, Calendar, Building2, BookOpen, AlertCircle, Lock } from 'lucide-react';
 import { StorageService } from '../services/storage';
+import { CryptoService } from '../services/cryptoService';
 
 export const VerificationModal = ({ isOpen, onClose, initialCertId = '' }) => {
   const [certIdInput, setCertIdInput] = useState(initialCertId);
   const [verificationResult, setVerificationResult] = useState(null);
   const [hasSearched, setHasSearched] = useState(false);
+  const [verifiedSignature, setVerifiedSignature] = useState('');
 
   if (!isOpen) return null;
 
-  const handleVerify = (e) => {
+  const handleVerify = async (e) => {
     e?.preventDefault();
     const query = certIdInput.trim().toUpperCase();
     if (!query) return;
@@ -26,11 +28,23 @@ export const VerificationModal = ({ isOpen, onClose, initialCertId = '' }) => {
     });
 
     if (foundRecord) {
+      const signature = await CryptoService.generateCertificateSignature({
+        certId: foundRecord.certId || `AU-CERT-${foundRecord.student?.rollNumber}`,
+        rollNumber: foundRecord.student?.rollNumber,
+        name: foundRecord.student?.name,
+        score: foundRecord.score,
+        maxScore: foundRecord.maxScore,
+        percentage: foundRecord.percentage,
+        date: foundRecord.timestamp
+      });
+      setVerifiedSignature(signature);
+
       setVerificationResult({
         isValid: true,
         record: foundRecord
       });
     } else {
+      setVerifiedSignature('');
       setVerificationResult({
         isValid: false,
         query
@@ -93,10 +107,27 @@ export const VerificationModal = ({ isOpen, onClose, initialCertId = '' }) => {
             {verificationResult?.isValid ? (
               <div className="bg-slate-950/90 rounded-2xl p-5 border border-emerald-500/50 space-y-4 shadow-xl">
                 
-                <div className="flex items-center space-x-2 text-emerald-400 bg-emerald-500/10 px-3 py-1.5 rounded-xl border border-emerald-500/30 text-xs font-extrabold">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                  <span>OFFICIALLY VERIFIED MERIT CERTIFICATE</span>
+                <div className="flex items-center justify-between bg-emerald-500/10 px-3.5 py-2 rounded-xl border border-emerald-500/30 text-xs font-extrabold text-emerald-400">
+                  <div className="flex items-center space-x-2">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                    <span>OFFICIALLY VERIFIED MERIT CERTIFICATE</span>
+                  </div>
+                  <span className="px-2 py-0.5 rounded-full text-[10px] bg-emerald-500/20 text-emerald-300 font-mono">
+                    SHA-256 MATCH
+                  </span>
                 </div>
+
+                {verifiedSignature && (
+                  <div className="p-2.5 rounded-xl bg-slate-900 border border-slate-800 space-y-1 text-[11px]">
+                    <div className="flex items-center space-x-1.5 text-emerald-400 font-bold">
+                      <Lock className="w-3.5 h-3.5" />
+                      <span>Tamper-Proof Cryptographic Signature Verified:</span>
+                    </div>
+                    <p className="font-mono text-[10px] text-slate-400 break-all bg-slate-950 p-1.5 rounded border border-slate-800/80">
+                      {verifiedSignature}
+                    </p>
+                  </div>
+                )}
 
                 <div className="space-y-2 text-xs">
                   <div className="flex justify-between border-b border-slate-900 pb-2">

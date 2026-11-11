@@ -18,9 +18,14 @@ import {
   Award,
   UserCheck,
   Building2,
-  Sparkles
+  Sparkles,
+  QrCode,
+  FileSpreadsheet
 } from 'lucide-react';
 import { FileImporterModal } from './FileImporterModal';
+import { QuizCreatorTab } from './QuizCreatorTab';
+import { AnalyticsDashboard } from './AnalyticsDashboard';
+import { ExcelExportService } from '../../services/excelExport';
 
 export const AdminDashboard = ({ 
   questions, 
@@ -215,6 +220,7 @@ export const AdminDashboard = ({
         {/* Tab Navigation */}
         <div className="flex items-center space-x-2 border-b border-slate-800 py-3 overflow-x-auto">
           {[
+            { id: 'QUIZ_ASSIGNMENTS', label: 'Quizzes & QR Codes', icon: QrCode },
             { id: 'QUESTIONS', label: 'Question Bank', icon: HelpCircle, count: questions.length },
             { id: 'CERT_TEMPLATE', label: 'Certificate & Signatories', icon: Award },
             { id: 'LEADERBOARD', label: 'Leaderboard Records', icon: Trophy, count: leaderboard.length },
@@ -248,6 +254,11 @@ export const AdminDashboard = ({
         {/* Tab Contents */}
         <div className="flex-1 overflow-y-auto py-6">
           
+          {/* TAB 0: CUSTOM QUIZ ASSIGNMENTS & QR CODES */}
+          {activeTab === 'QUIZ_ASSIGNMENTS' && (
+            <QuizCreatorTab questions={questions} leaderboard={leaderboard} />
+          )}
+
           {/* TAB 1: QUESTION BANK CRUD */}
           {activeTab === 'QUESTIONS' && (
             <div className="space-y-6">
@@ -574,8 +585,17 @@ export const AdminDashboard = ({
 
                 <div className="flex items-center space-x-2">
                   <button
-                    onClick={exportLeaderboardCSV}
+                    onClick={() => ExcelExportService.exportLeaderboardToExcel(leaderboard)}
                     className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center space-x-1.5 shadow-lg shadow-emerald-600/30 transition-all"
+                    title="Export complete master records to Microsoft Excel spreadsheet (.xlsx)"
+                  >
+                    <FileSpreadsheet className="w-4 h-4" />
+                    <span>Export to Excel (.xlsx)</span>
+                  </button>
+
+                  <button
+                    onClick={exportLeaderboardCSV}
+                    className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold flex items-center space-x-1.5 transition-all"
                   >
                     <Download className="w-4 h-4" />
                     <span>Export to CSV</span>
@@ -728,35 +748,9 @@ export const AdminDashboard = ({
             </form>
           )}
 
-          {/* TAB 5: ANALYTICS DASHBOARD */}
+          {/* TAB 5: ADVANCED FACULTY ANALYTICS DASHBOARD */}
           {activeTab === 'ANALYTICS' && (
-            <div className="space-y-6">
-              
-              <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-                
-                <div className="glass-card p-5 rounded-2xl border border-slate-800">
-                  <span className="text-xs text-slate-400 block mb-1">Total Question Bank</span>
-                  <span className="text-2xl font-black text-white">{questions.length}</span>
-                </div>
-
-                <div className="glass-card p-5 rounded-2xl border border-slate-800">
-                  <span className="text-xs text-slate-400 block mb-1">Total Candidates</span>
-                  <span className="text-2xl font-black text-indigo-400">{totalAttempts}</span>
-                </div>
-
-                <div className="glass-card p-5 rounded-2xl border border-slate-800">
-                  <span className="text-xs text-slate-400 block mb-1">Overall Pass Rate</span>
-                  <span className="text-2xl font-black text-emerald-400">{passRate}%</span>
-                </div>
-
-                <div className="glass-card p-5 rounded-2xl border border-slate-800">
-                  <span className="text-xs text-slate-400 block mb-1">Cheating Violations Flagged</span>
-                  <span className="text-2xl font-black text-rose-400">{cheatingCount}</span>
-                </div>
-
-              </div>
-
-            </div>
+            <AnalyticsDashboard questions={questions} leaderboard={leaderboard} />
           )}
 
         </div>

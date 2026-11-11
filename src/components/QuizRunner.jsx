@@ -12,8 +12,11 @@ import {
   Maximize2,
   Lock,
   X,
-  EyeOff
+  EyeOff,
+  Cpu
 } from 'lucide-react';
+import { WasmEngine } from '../services/wasmEngine';
+import { WebcamProctor } from './WebcamProctor';
 
 export const QuizRunner = ({ 
   student, 
@@ -30,6 +33,9 @@ export const QuizRunner = ({
   const [cheatingAlert, setCheatingAlert] = useState(null);
   const [isFullscreenActive, setIsFullscreenActive] = useState(true);
   const [isWindowFocused, setIsWindowFocused] = useState(true);
+  const [webcamViolations, setWebcamViolations] = useState(0);
+  const [tabSwitches, setTabSwitches] = useState(0);
+  const [blurCount, setBlurCount] = useState(0);
 
   const totalQuestions = questions.length;
   const currentQuestion = questions[currentIndex];
@@ -156,7 +162,7 @@ export const QuizRunner = ({
     }));
   };
 
-  const submitQuiz = (cheatingDetected = false, disqualificationReason = "") => {
+  const submitQuiz = async (cheatingDetected = false, disqualificationReason = "") => {
     if (quizSubmittedRef.current) return;
     quizSubmittedRef.current = true;
     if (timerRef.current) clearInterval(timerRef.current);
@@ -166,10 +172,9 @@ export const QuizRunner = ({
       document.exitFullscreen().catch(() => {});
     }
 
-    const timeTakenSec = (questions.length * settings.timePerQuestionSec) - timeLeft;
+    const totalAllowedSec = questions.length * settings.timePerQuestionSec;
+    const timeTakenSec = totalAllowedSec - timeLeft;
 
-    // Calculate score
-    let totalScore = 0;
     let correctCount = 0;
     let wrongCount = 0;
 
@@ -179,15 +184,8 @@ export const QuizRunner = ({
       const isCorrect = isAnswered && selectedIndex === q.correctOptionIndex;
 
       if (isAnswered) {
-        if (isCorrect) {
-          totalScore += settings.marksPerQuestion;
-          correctCount++;
-        } else {
-          if (settings.allowNegativeMarking) {
-            totalScore -= settings.negativeMarks;
-          }
-          wrongCount++;
-        }
+        if (isCorrect) correctCount++;
+        else wrongCount++;
       }
 
       return {
@@ -198,8 +196,24 @@ export const QuizRunner = ({
       };
     });
 
-    const maxScore = questions.length * settings.marksPerQuestion;
-    const finalScore = Math.max(0, totalScore);
+    // Native C++ WebAssembly Assessment Evaluation
+    const wasmResult = await WasmEngine.calculateScore(
+      correctCount,
+      wrongCount,
+      settings.marksPerQuestion || 4,
+      settings.allowNegativeMarking ? (settings.negativeMarks || 1) : 0,
+      timeTakenSec,
+      totalAllowedSec
+    );
+
+    const honestyIndex = await WasmEngine.calculateHonestyIndex(
+      tabSwitches,
+      blurCount,
+      webcamViolations
+    );
+
+    const maxScore = questions.length * (settings.marksPerQuestion || 4);
+    const finalScore = wasmResult.score;
     const percentage = maxScore > 0 ? (finalScore / maxScore) * 100 : 0;
 
     onFinishQuiz({
@@ -213,6 +227,8 @@ export const QuizRunner = ({
       timeTakenSec,
       cheatingDetected,
       disqualificationReason,
+      honestyIndex,
+      evaluationEngine: wasmResult.engine,
       detailedResults
     });
   };
@@ -287,6 +303,11 @@ export const QuizRunner = ({
               <span>Fix Fullscreen</span>
             </button>
           )}
+
+          <div className="hidden sm:flex items-center space-x-1.5 px-3 py-2 rounded-xl bg-indigo-950/40 border border-indigo-500/30 text-indigo-300 text-xs font-mono font-bold">
+            <Cpu className="w-3.5 h-3.5 text-indigo-400" />
+            <span>C++ WASM v1.4</span>
+          </div>
 
           <div className={`flex items-center space-x-2 px-4 py-2 rounded-xl border text-sm font-mono font-bold shadow-md ${
             timeLeft < 60 ? 'bg-rose-500/20 text-rose-400 border-rose-500/40 animate-pulse' : 'bg-slate-800 text-amber-300 border-slate-700'
@@ -517,6 +538,25 @@ export const QuizRunner = ({
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Floating AI Optical Proctor Camera */}
+      {settings.enableWebcamProctor !== false && (
+        <div className="fixed bottom-6 right-6 z-40">
+          <WebcamProctor
+            isActive={!quizSubmittedRef.current}
+            onViolation={(reason) => {
+              setWebcamViolations(prev => {
+                const count = prev + 1;
+                if (count >= 3 && settings.strictAntiCheat) {
+                  handleAntiCheatViolation(reason);
+                }
+                return count;
+              });
+            }}
+            candidateName={student?.name}
+          />
         </div>
       )}
 

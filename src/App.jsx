@@ -48,7 +48,33 @@ export function App() {
   const handleRegisterStudent = (studentDetails) => {
     setStudent(studentDetails);
 
-    // Filter questions by language & level
+    // If attempting an official custom assigned quiz
+    if (studentDetails.customQuiz) {
+      const custom = studentDetails.customQuiz;
+      const allQuestions = StorageService.getQuestions();
+      let selected = [];
+      if (custom.questionIds && custom.questionIds.length > 0) {
+        const idSet = new Set(custom.questionIds);
+        selected = allQuestions.filter(q => idSet.has(q.id));
+      }
+      if (selected.length === 0) {
+        selected = allQuestions.filter(q => (q.language || 'CPP') === (custom.language || 'CPP')).slice(0, 10);
+      }
+
+      setSettings(prev => ({
+        ...prev,
+        timePerQuestionSec: Math.round(((custom.durationMinutes || 15) * 60) / Math.max(1, selected.length)),
+        passingScorePercent: custom.passingPercentage || 60,
+        enableWebcamProctor: custom.enableWebcamProctor !== false,
+        strictAntiCheat: custom.strictAntiCheat !== false
+      }));
+
+      setActiveQuestions(selected);
+      setCurrentStep('INSTRUCTIONS');
+      return;
+    }
+
+    // Standard mode: Filter questions by language & level
     const allQuestions = StorageService.getQuestions();
     
     // 1. Language Filter
@@ -91,7 +117,10 @@ export function App() {
       percentage: resultData.percentage,
       timeTakenSec: resultData.timeTakenSec,
       cheatingDetected: resultData.cheatingDetected,
-      disqualificationReason: resultData.disqualificationReason
+      disqualificationReason: resultData.disqualificationReason,
+      quizId: resultData.student?.quizId || null,
+      quizTitle: resultData.student?.quizTitle || null,
+      certSignature: resultData.certSignature || null
     });
 
     setLeaderboard(updatedLeaderboard);

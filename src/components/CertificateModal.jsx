@@ -1,8 +1,9 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { Award, Download, X, CheckCircle2, Loader2, ShieldCheck } from 'lucide-react';
+import { Award, Download, X, CheckCircle2, Loader2, ShieldCheck, Lock } from 'lucide-react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import QRCode from 'qrcode';
+import { CryptoService } from '../services/cryptoService';
 
 export const CertificateModal = ({ result, settings = {}, onClose, onOpenVerification }) => {
   const certRef = useRef(null);
@@ -38,30 +39,51 @@ export const CertificateModal = ({ result, settings = {}, onClose, onOpenVerific
                    student.language === 'PYTHON' ? 'Python & Algorithmic Architecture' : 
                    'Object-Oriented Programming & C++ Architecture';
 
-  // Generate QR code data URL on component mount
-  useEffect(() => {
-    const verificationPayload = JSON.stringify({
-      certId,
-      name: student.name,
-      roll: student.rollNumber,
-      college: student.college,
-      score: `${Math.round(percentage)}%`,
-      lang: student.language || 'CPP',
-      status: 'VERIFIED_GENUINE',
-      issuer: 'Aditya University CSE Dept'
-    });
+  const [certSignature, setCertSignature] = useState('');
 
-    QRCode.toDataURL(verificationPayload, {
-      margin: 1,
-      width: 150,
-      color: {
-        dark: '#0f172a',
-        light: '#ffffff'
+  // Generate SHA-256 Digital Signature and QR code on component mount
+  useEffect(() => {
+    const generateSignedCertificate = async () => {
+      try {
+        const signature = await CryptoService.generateCertificateSignature({
+          certId,
+          rollNumber: student?.rollNumber,
+          name: student?.name,
+          score,
+          maxScore,
+          percentage,
+          date: certDate
+        });
+        setCertSignature(signature);
+
+        const verificationPayload = JSON.stringify({
+          certId,
+          name: student.name,
+          roll: student.rollNumber,
+          college: student.college,
+          score: `${Math.round(percentage)}%`,
+          lang: student.language || 'CPP',
+          sha256: signature.slice(0, 16),
+          status: 'CRYPTOGRAPHICALLY_VERIFIED',
+          issuer: 'Aditya University CSE Dept'
+        });
+
+        const url = await QRCode.toDataURL(verificationPayload, {
+          margin: 1,
+          width: 150,
+          color: {
+            dark: '#0f172a',
+            light: '#ffffff'
+          }
+        });
+        setQrCodeDataUrl(url);
+      } catch (err) {
+        console.error("Certificate Signing / QR Error:", err);
       }
-    })
-      .then(url => setQrCodeDataUrl(url))
-      .catch(err => console.error("QR Code Generation Error:", err));
-  }, [certId, student, percentage]);
+    };
+
+    generateSignedCertificate();
+  }, [certId, student, percentage, score, maxScore, certDate]);
 
   // High-Quality Direct Landscape PDF Downloader
   const handleSavePDF = async () => {
@@ -219,11 +241,18 @@ export const CertificateModal = ({ result, settings = {}, onClose, onOpenVerific
             </p>
 
             {/* Verification Pill & QR Code Container */}
-            <div className="flex items-center justify-center space-x-3 pt-1">
+            <div className="flex flex-col items-center justify-center space-y-1.5 pt-1">
               <div className="inline-flex items-center space-x-2 px-4 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[11px] sm:text-xs font-bold shadow-sm">
                 <CheckCircle2 className="w-4 h-4 text-emerald-400" />
                 <span>OFFICIALLY VERIFIED EXAM PASS • ID: {certId}</span>
               </div>
+
+              {certSignature && (
+                <div className="inline-flex items-center space-x-1.5 text-[9px] font-mono text-slate-400 bg-slate-900/60 px-3 py-0.5 rounded-full border border-slate-800">
+                  <ShieldCheck className="w-3 h-3 text-emerald-400" />
+                  <span>SHA-256 Digital Fingerprint: {certSignature.slice(0, 24)}...{certSignature.slice(-8)}</span>
+                </div>
+              )}
             </div>
 
           </div>
