@@ -236,15 +236,15 @@ export const AdminDashboard = ({
           </div>
         </div>
 
-        {/* Tab Navigation */}
-        <div className="flex items-center space-x-2 border-b border-slate-800 py-3 overflow-x-auto">
+        {/* Tab Navigation (Neat Responsive Segmented Tray - Zero Horizontal Scroll) */}
+        <div className="my-4 p-1.5 rounded-2xl bg-slate-950/70 border border-slate-800/90 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-1.5 shrink-0">
           {[
-            { id: 'QUIZ_ASSIGNMENTS', label: 'Quizzes & QR Codes', icon: QrCode },
+            { id: 'QUIZ_ASSIGNMENTS', label: 'Quizzes & QR', icon: QrCode },
             { id: 'QUESTIONS', label: 'Question Bank', icon: HelpCircle, count: questions.length },
-            { id: 'CERT_TEMPLATE', label: 'Certificate & Signatories', icon: Award },
-            { id: 'LEADERBOARD', label: 'Leaderboard Records', icon: Trophy, count: leaderboard.length },
-            { id: 'SETTINGS', label: 'Quiz Settings', icon: Settings },
-            { id: 'ANALYTICS', label: 'Analytics Dashboard', icon: BarChart3 }
+            { id: 'CERT_TEMPLATE', label: 'Certificates', icon: Award },
+            { id: 'LEADERBOARD', label: 'Leaderboard', icon: Trophy, count: leaderboard.length },
+            { id: 'SETTINGS', label: 'Settings', icon: Settings },
+            { id: 'ANALYTICS', label: 'Analytics', icon: BarChart3 }
           ].map(tab => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -252,16 +252,18 @@ export const AdminDashboard = ({
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center space-x-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
+                className={`flex items-center justify-center space-x-1.5 px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${
                   isActive
                     ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30'
-                    : 'bg-slate-800/60 hover:bg-slate-800 text-slate-400 hover:text-slate-200'
+                    : 'bg-transparent hover:bg-slate-800/80 text-slate-400 hover:text-slate-200'
                 }`}
               >
-                <Icon className="w-4 h-4" />
-                <span>{tab.label}</span>
+                <Icon className="w-4 h-4 shrink-0" />
+                <span className="truncate">{tab.label}</span>
                 {tab.count !== undefined && (
-                  <span className={`px-2 py-0.5 rounded-full text-[10px] ${isActive ? 'bg-indigo-700 text-indigo-100' : 'bg-slate-700 text-slate-300'}`}>
+                  <span className={`px-1.5 py-0.5 rounded-full text-[10px] leading-none font-extrabold shrink-0 ${
+                    isActive ? 'bg-indigo-700 text-indigo-100' : 'bg-slate-800 text-slate-300'
+                  }`}>
                     {tab.count}
                   </span>
                 )}
@@ -271,7 +273,7 @@ export const AdminDashboard = ({
         </div>
 
         {/* Tab Contents */}
-        <div className="flex-1 overflow-y-auto py-6">
+        <div className="flex-1 overflow-y-auto py-2 pr-1">
           
           {/* TAB 0: CUSTOM QUIZ ASSIGNMENTS & QR CODES */}
           {activeTab === 'QUIZ_ASSIGNMENTS' && (

@@ -39,7 +39,8 @@ export const QuizResults = ({
     detailedResults
   } = result;
 
-  const isPassed = percentage >= 60 && !cheatingDetected;
+  const passingThreshold = result.passingPercentage ?? 60;
+  const isPassed = percentage >= passingThreshold && !cheatingDetected;
 
   useEffect(() => {
     if (isPassed && !cheatingDetected) {

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { ShieldCheck, CheckCircle2, X, Search, Award, User, Hash, Calendar, Building2, BookOpen, AlertCircle, Lock } from 'lucide-react';
 import { StorageService } from '../services/storage';
 import { CryptoService } from '../services/cryptoService';
@@ -9,33 +9,31 @@ export const VerificationModal = ({ isOpen, onClose, initialCertId = '' }) => {
   const [hasSearched, setHasSearched] = useState(false);
   const [verifiedSignature, setVerifiedSignature] = useState('');
 
-  if (!isOpen) return null;
-
-  const handleVerify = async (e) => {
-    e?.preventDefault();
-    const query = certIdInput.trim().toUpperCase();
+  const runVerification = useCallback(async (rawQuery) => {
+    const query = (rawQuery || '').trim().toUpperCase();
     if (!query) return;
 
     setHasSearched(true);
     const leaderboard = StorageService.getLeaderboard();
     
-    // Search by certificate ID match or Roll number match
+    // Search by certificate ID match, record ID match, or Roll number match
     const foundRecord = leaderboard.find(record => {
       const matchRoll = record.student?.rollNumber?.toUpperCase() === query;
       const recordIdMatch = record.id?.toUpperCase() === query;
-      const customCertIdMatch = query.includes(record.student?.rollNumber?.toUpperCase() || '___');
-      return matchRoll || recordIdMatch || customCertIdMatch;
+      const certIdMatch = record.certId?.toUpperCase() === query;
+      const customCertIdMatch = record.student?.rollNumber && query.includes(record.student.rollNumber.toUpperCase());
+      return matchRoll || recordIdMatch || certIdMatch || customCertIdMatch;
     });
 
     if (foundRecord) {
-      const signature = await CryptoService.generateCertificateSignature({
+      const signature = foundRecord.certSignature || await CryptoService.generateCertificateSignature({
         certId: foundRecord.certId || `AU-CERT-${foundRecord.student?.rollNumber}`,
         rollNumber: foundRecord.student?.rollNumber,
         name: foundRecord.student?.name,
         score: foundRecord.score,
         maxScore: foundRecord.maxScore,
         percentage: foundRecord.percentage,
-        date: foundRecord.timestamp
+        date: foundRecord.certDate || foundRecord.timestamp
       });
       setVerifiedSignature(signature);
 
@@ -50,6 +48,26 @@ export const VerificationModal = ({ isOpen, onClose, initialCertId = '' }) => {
         query
       });
     }
+  }, []);
+
+  useEffect(() => {
+    if (isOpen) {
+      setCertIdInput(initialCertId);
+      if (initialCertId) {
+        runVerification(initialCertId);
+      } else {
+        setHasSearched(false);
+        setVerificationResult(null);
+        setVerifiedSignature('');
+      }
+    }
+  }, [isOpen, initialCertId, runVerification]);
+
+  if (!isOpen) return null;
+
+  const handleVerify = async (e) => {
+    e?.preventDefault();
+    await runVerification(certIdInput);
   };
 
   return (

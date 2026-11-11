@@ -1,5 +1,5 @@
-import React, { useRef, useState, useEffect } from 'react';
-import { Award, Download, X, CheckCircle2, Loader2, ShieldCheck, Lock } from 'lucide-react';
+import React, { useRef, useState, useEffect, useMemo } from 'react';
+import { Award, Download, X, CheckCircle2, Loader2, ShieldCheck } from 'lucide-react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import QRCode from 'qrcode';
@@ -9,44 +9,33 @@ export const CertificateModal = ({ result, settings = {}, onClose, onOpenVerific
   const certRef = useRef(null);
   const [isExportingPDF, setIsExportingPDF] = useState(false);
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState('');
-
-  if (!result) return null;
-
-  const { student, percentage, score, maxScore } = result;
-  
-  const certDate = new Date().toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  });
-  
-  const certId = `AU-CERT-${student?.rollNumber || '849201'}-${Math.floor(100 + Math.random() * 900)}`;
-
-  // Default Fallbacks for Certificate Signatories & Settings
-  const collegeName = settings.collegeName || "ADITYA UNIVERSITY";
-  const departmentName = settings.departmentName || "DEPARTMENT OF COMPUTER SCIENCE & ENGINEERING";
-  const certBodyText = settings.certBodyText || "for successfully passing the official online assessment in";
-  
-  const mentorName = settings.mentorName || "SK. VAHIDA";
-  const mentorTitle = settings.mentorTitle || "SK. VAHIDA, M.Tech(Ph.D)";
-  const mentorRole = settings.mentorRole || "Assistant Professor & Project Mentor";
-
-  const hodName = settings.hodName || "Dr. K. Srinivasa Rao";
-  const hodTitle = settings.hodTitle || "Dr. K. Srinivasa Rao, Ph.D";
-  const hodRole = settings.hodRole || "Head of Department (CSE)";
-
-  const langName = student.language === 'C' ? 'C Systems & Procedural Programming' :
-                   student.language === 'JAVA' ? 'Java Enterprise Architecture' : 
-                   student.language === 'PYTHON' ? 'Python & Algorithmic Architecture' : 
-                   'Object-Oriented Programming & C++ Architecture';
-
   const [certSignature, setCertSignature] = useState('');
 
-  // Generate SHA-256 Digital Signature and QR code on component mount
+  const student = result?.student;
+  const percentage = result?.percentage ?? 0;
+  const score = result?.score ?? 0;
+  const maxScore = result?.maxScore ?? 0;
+
+  const certDate = useMemo(() => {
+    return result?.certDate || new Date().toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  }, [result?.certDate]);
+
+  const certId = useMemo(() => {
+    return result?.certId || `AU-CERT-${student?.rollNumber || '849201'}-${Math.floor(100 + Math.random() * 900)}`;
+  }, [result?.certId, student?.rollNumber]);
+
+  // Generate SHA-256 Digital Signature and QR code once when result changes
   useEffect(() => {
+    if (!result || !student) return;
+    let isCancelled = false;
+
     const generateSignedCertificate = async () => {
       try {
-        const signature = await CryptoService.generateCertificateSignature({
+        const signature = result.certSignature || await CryptoService.generateCertificateSignature({
           certId,
           rollNumber: student?.rollNumber,
           name: student?.name,
@@ -55,6 +44,8 @@ export const CertificateModal = ({ result, settings = {}, onClose, onOpenVerific
           percentage,
           date: certDate
         });
+
+        if (isCancelled) return;
         setCertSignature(signature);
 
         const verificationPayload = JSON.stringify({
@@ -77,14 +68,37 @@ export const CertificateModal = ({ result, settings = {}, onClose, onOpenVerific
             light: '#ffffff'
           }
         });
-        setQrCodeDataUrl(url);
+        if (!isCancelled) {
+          setQrCodeDataUrl(url);
+        }
       } catch (err) {
         console.error("Certificate Signing / QR Error:", err);
       }
     };
 
     generateSignedCertificate();
-  }, [certId, student, percentage, score, maxScore, certDate]);
+    return () => { isCancelled = true; };
+  }, [result, certId, student, percentage, score, maxScore, certDate]);
+
+  if (!result || !student) return null;
+
+  // Default Fallbacks for Certificate Signatories & Settings
+  const collegeName = settings.collegeName || "ADITYA UNIVERSITY";
+  const departmentName = settings.departmentName || "DEPARTMENT OF COMPUTER SCIENCE & ENGINEERING";
+  const certBodyText = settings.certBodyText || "for successfully passing the official online assessment in";
+  
+  const mentorName = settings.mentorName || "SK. VAHIDA";
+  const mentorTitle = settings.mentorTitle || "SK. VAHIDA, M.Tech(Ph.D)";
+  const mentorRole = settings.mentorRole || "Assistant Professor & Project Mentor";
+
+  const hodName = settings.hodName || "Dr. K. Srinivasa Rao";
+  const hodTitle = settings.hodTitle || "Dr. K. Srinivasa Rao, Ph.D";
+  const hodRole = settings.hodRole || "Head of Department (CSE)";
+
+  const langName = student.language === 'C' ? 'C Systems & Procedural Programming' :
+                   student.language === 'JAVA' ? 'Java Enterprise Architecture' : 
+                   student.language === 'PYTHON' ? 'Python & Algorithmic Architecture' : 
+                   'Object-Oriented Programming & C++ Architecture';
 
   // High-Quality Direct Landscape PDF Downloader
   const handleSavePDF = async () => {

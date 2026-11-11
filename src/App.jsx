@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { StorageService } from './services/storage';
+import { CryptoService } from './services/cryptoService';
 import { Navbar } from './components/Navbar';
 import { StudentRegistration } from './components/StudentRegistration';
 import { InstructionsModal } from './components/InstructionsModal';
@@ -20,6 +21,7 @@ export function App() {
   // Storage Data States
   const [questions, setQuestions] = useState([]);
   const [settings, setSettings] = useState({});
+  const [sessionSettings, setSessionSettings] = useState(null);
   const [leaderboard, setLeaderboard] = useState([]);
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
 
@@ -61,20 +63,23 @@ export function App() {
         selected = allQuestions.filter(q => (q.language || 'CPP') === (custom.language || 'CPP')).slice(0, 10);
       }
 
-      setSettings(prev => ({
-        ...prev,
+      setSessionSettings({
+        ...settings,
         timePerQuestionSec: Math.round(((custom.durationMinutes || 15) * 60) / Math.max(1, selected.length)),
-        passingScorePercent: custom.passingPercentage || 60,
+        passingPercentage: custom.passingPercentage || 60,
+        marksPerQuestion: custom.marksPerQuestion || settings.marksPerQuestion || 4,
+        negativeMarks: custom.negativeMarks ?? settings.negativeMarks ?? 1,
         enableWebcamProctor: custom.enableWebcamProctor !== false,
         strictAntiCheat: custom.strictAntiCheat !== false
-      }));
+      });
 
       setActiveQuestions(selected);
       setCurrentStep('INSTRUCTIONS');
       return;
     }
 
-    // Standard mode: Filter questions by language & level
+    // Standard mode: Clear custom session overrides & filter questions by language & level
+    setSessionSettings(null);
     const allQuestions = StorageService.getQuestions();
     
     // 1. Language Filter
@@ -106,8 +111,33 @@ export function App() {
   };
 
   // Step 3: Finish Quiz & Record Result
-  const handleFinishQuiz = (resultData) => {
-    setQuizResult(resultData);
+  const handleFinishQuiz = async (resultData) => {
+    const activeQuizSettings = sessionSettings || settings;
+    const certDate = new Date().toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+    const certId = `AU-CERT-${resultData.student?.rollNumber || '849201'}-${Math.floor(100 + Math.random() * 900)}`;
+    const certSignature = await CryptoService.generateCertificateSignature({
+      certId,
+      rollNumber: resultData.student?.rollNumber,
+      name: resultData.student?.name,
+      score: resultData.score,
+      maxScore: resultData.maxScore,
+      percentage: resultData.percentage,
+      date: certDate
+    });
+
+    const enrichedResult = {
+      ...resultData,
+      certId,
+      certDate,
+      certSignature,
+      passingPercentage: activeQuizSettings.passingPercentage || 60
+    };
+
+    setQuizResult(enrichedResult);
     
     // Save to Leaderboard
     const updatedLeaderboard = StorageService.saveQuizRecord({
@@ -120,7 +150,9 @@ export function App() {
       disqualificationReason: resultData.disqualificationReason,
       quizId: resultData.student?.quizId || null,
       quizTitle: resultData.student?.quizTitle || null,
-      certSignature: resultData.certSignature || null
+      certId,
+      certDate,
+      certSignature
     });
 
     setLeaderboard(updatedLeaderboard);
@@ -176,6 +208,7 @@ export function App() {
     setStudent(null);
     setActiveQuestions([]);
     setQuizResult(null);
+    setSessionSettings(null);
     setCurrentStep('REGISTRATION');
   };
 
@@ -256,7 +289,7 @@ export function App() {
         {currentStep === 'INSTRUCTIONS' && student && (
           <InstructionsModal
             student={student}
-            settings={settings}
+            settings={sessionSettings || settings}
             questionCount={activeQuestions.length}
             onStartQuiz={handleStartQuiz}
             onBack={() => setCurrentStep('REGISTRATION')}
@@ -267,7 +300,7 @@ export function App() {
           <QuizRunner
             student={student}
             questions={activeQuestions}
-            settings={settings}
+            settings={sessionSettings || settings}
             onFinishQuiz={handleFinishQuiz}
           />
         )}

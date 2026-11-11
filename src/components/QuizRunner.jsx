@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { 
   Clock, 
   AlertTriangle, 
@@ -41,6 +41,11 @@ export const QuizRunner = ({
   const currentQuestion = questions[currentIndex];
   const timerRef = useRef(null);
   const quizSubmittedRef = useRef(false);
+  const userAnswersRef = useRef({});
+  const timeLeftRef = useRef(questions.length * settings.timePerQuestionSec);
+  const tabSwitchesRef = useRef(0);
+  const blurCountRef = useRef(0);
+  const webcamViolationsRef = useRef(0);
 
   // Fullscreen trigger helper
   const reEnterFullscreen = async () => {
@@ -64,6 +69,8 @@ export const QuizRunner = ({
     const handleVisibilityChange = () => {
       if (document.hidden) {
         setIsWindowFocused(false);
+        tabSwitchesRef.current += 1;
+        setTabSwitches(tabSwitchesRef.current);
         if (!quizSubmittedRef.current && settings.strictAntiCheat) {
           handleAntiCheatViolation("Browser Tab Switch / Window Switch Detected");
         }
@@ -83,6 +90,8 @@ export const QuizRunner = ({
 
     const handleBlur = () => {
       setIsWindowFocused(false);
+      blurCountRef.current += 1;
+      setBlurCount(blurCountRef.current);
       if (!quizSubmittedRef.current && settings.strictAntiCheat) {
         handleAntiCheatViolation("Window Focus Lost / App Switch Detected");
       }
@@ -129,30 +138,46 @@ export const QuizRunner = ({
     timerRef.current = setInterval(() => {
       setTimeLeft((prev) => {
         if (prev <= 1) {
+          timeLeftRef.current = 0;
           clearInterval(timerRef.current);
           submitQuiz(false, "Time Expired");
           return 0;
         }
-        return prev - 1;
+        const next = prev - 1;
+        timeLeftRef.current = next;
+        return next;
       });
     }, 1000);
 
     return () => clearInterval(timerRef.current);
   }, []);
 
-  const handleAntiCheatViolation = (reason) => {
+  const handleAntiCheatViolation = useCallback((reason) => {
     if (quizSubmittedRef.current) return;
     setCheatingAlert(reason);
     setTimeout(() => {
       submitQuiz(true, reason);
     }, 1500);
-  };
+  }, []);
+
+  const handleWebcamViolation = useCallback((reason) => {
+    webcamViolationsRef.current += 1;
+    const count = webcamViolationsRef.current;
+    setWebcamViolations(count);
+    if (count >= 3 && settings.strictAntiCheat) {
+      handleAntiCheatViolation(reason);
+    }
+  }, [settings.strictAntiCheat, handleAntiCheatViolation]);
 
   const handleSelectOption = (optionIndex) => {
-    setUserAnswers((prev) => ({
-      ...prev,
-      [currentQuestion.id]: optionIndex
-    }));
+    setUserAnswers((prev) => {
+      const updated = {
+        ...prev,
+        [currentQuestion.id]: optionIndex
+      };
+      userAnswersRef.current = updated;
+      return updated;
+    });
   };
 
   const toggleFlag = () => {
@@ -173,13 +198,14 @@ export const QuizRunner = ({
     }
 
     const totalAllowedSec = questions.length * settings.timePerQuestionSec;
-    const timeTakenSec = totalAllowedSec - timeLeft;
+    const timeTakenSec = Math.max(0, totalAllowedSec - timeLeftRef.current);
+    const currentAnswers = userAnswersRef.current;
 
     let correctCount = 0;
     let wrongCount = 0;
 
     const detailedResults = questions.map((q) => {
-      const selectedIndex = userAnswers[q.id];
+      const selectedIndex = currentAnswers[q.id];
       const isAnswered = selectedIndex !== undefined;
       const isCorrect = isAnswered && selectedIndex === q.correctOptionIndex;
 
@@ -207,9 +233,9 @@ export const QuizRunner = ({
     );
 
     const honestyIndex = await WasmEngine.calculateHonestyIndex(
-      tabSwitches,
-      blurCount,
-      webcamViolations
+      tabSwitchesRef.current,
+      blurCountRef.current,
+      webcamViolationsRef.current
     );
 
     const maxScore = questions.length * (settings.marksPerQuestion || 4);
@@ -546,15 +572,7 @@ export const QuizRunner = ({
         <div className="fixed bottom-6 right-6 z-40">
           <WebcamProctor
             isActive={!quizSubmittedRef.current}
-            onViolation={(reason) => {
-              setWebcamViolations(prev => {
-                const count = prev + 1;
-                if (count >= 3 && settings.strictAntiCheat) {
-                  handleAntiCheatViolation(reason);
-                }
-                return count;
-              });
-            }}
+            onViolation={handleWebcamViolation}
             candidateName={student?.name}
           />
         </div>

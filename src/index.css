@@ -159,6 +159,10 @@
   background: rgba(99, 102, 241, 0.75);
 }
 
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
 /* Print CSS for Landscape Certificate */
 @media print {
   @page {
