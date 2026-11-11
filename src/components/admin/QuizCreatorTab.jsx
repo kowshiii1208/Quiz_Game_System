@@ -142,14 +142,41 @@ export const QuizCreatorTab = ({ questions = [], leaderboard = [], onSaveQuestio
     setShowCustomQForm(false);
   };
 
+  const buildQuizShareUrl = (quiz) => {
+    const currentOrigin = window.location.origin;
+    const currentPath = window.location.pathname;
+    try {
+      const latestBank = StorageService.getQuestions();
+      const customQs = latestBank.filter(
+        q => (quiz.questionIds || []).includes(q.id) && q.id > 120
+      );
+      const compact = {
+        id: quiz.id,
+        t: quiz.title,
+        l: quiz.language || 'CPP',
+        df: quiz.difficulty || 'MIXED',
+        du: quiz.durationMinutes || 15,
+        pp: quiz.passingPercentage || 60,
+        wp: quiz.enableWebcamProctor !== false ? 1 : 0,
+        ac: quiz.strictAntiCheat !== false ? 1 : 0,
+        qids: quiz.questionIds || [],
+        ...(customQs.length > 0 ? { cqs: customQs } : {})
+      };
+      const bytes = new TextEncoder().encode(JSON.stringify(compact));
+      let bin = '';
+      bytes.forEach(b => { bin += String.fromCharCode(b); });
+      const encoded = btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+      return `${currentOrigin}${currentPath}?quizId=${encodeURIComponent(quiz.id)}&d=${encoded}`;
+    } catch (e) {
+      return `${currentOrigin}${currentPath}?quizId=${encodeURIComponent(quiz.id)}`;
+    }
+  };
+
   const handleOpenShare = async (quiz) => {
     setSelectedQuiz(quiz);
     setCopySuccess(false);
     
-    // Construct direct shareable URL with ?quizId=
-    const currentOrigin = window.location.origin;
-    const currentPath = window.location.pathname;
-    const directUrl = `${currentOrigin}${currentPath}?quizId=${encodeURIComponent(quiz.id)}`;
+    const directUrl = buildQuizShareUrl(quiz);
 
     try {
       const url = await QRCode.toDataURL(directUrl, {
@@ -170,7 +197,7 @@ export const QuizCreatorTab = ({ questions = [], leaderboard = [], onSaveQuestio
 
   const handleCopyLink = () => {
     if (!selectedQuiz) return;
-    const directUrl = `${window.location.origin}${window.location.pathname}?quizId=${encodeURIComponent(selectedQuiz.id)}`;
+    const directUrl = buildQuizShareUrl(selectedQuiz);
     navigator.clipboard.writeText(directUrl);
     setCopySuccess(true);
     setTimeout(() => setCopySuccess(false), 2500);
@@ -759,7 +786,7 @@ export const QuizCreatorTab = ({ questions = [], leaderboard = [], onSaveQuestio
                 <input
                   type="text"
                   readOnly
-                  value={`${window.location.origin}${window.location.pathname}?quizId=${selectedQuiz.id}`}
+                  value={buildQuizShareUrl(selectedQuiz)}
                   className="flex-1 bg-transparent text-xs text-slate-300 font-mono focus:outline-none truncate px-1"
                 />
                 <button
@@ -785,7 +812,7 @@ export const QuizCreatorTab = ({ questions = [], leaderboard = [], onSaveQuestio
                 </button>
 
                 <a
-                  href={`?quizId=${selectedQuiz.id}`}
+                  href={buildQuizShareUrl(selectedQuiz)}
                   target="_blank"
                   rel="noreferrer"
                   className="w-1/2 ml-1 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold flex items-center justify-center space-x-1.5"

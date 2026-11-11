@@ -273,7 +273,7 @@ export const QuizRunner = ({
       onCopy={(e) => e.preventDefault()}
       onCut={(e) => e.preventDefault()}
       onDragStart={(e) => e.preventDefault()}
-      className="min-h-[calc(100vh-80px)] flex flex-col justify-between max-w-6xl mx-auto px-4 py-4 sm:py-6 select-none"
+      className="min-h-[calc(100vh-80px)] flex flex-col justify-between max-w-6xl mx-auto px-4 pt-4 pb-24 sm:py-6 select-none"
       style={{ WebkitUserSelect: 'none', userSelect: 'none' }}
     >
       
@@ -567,15 +567,13 @@ export const QuizRunner = ({
         </div>
       )}
 
-      {/* Floating AI Optical Proctor Camera */}
+      {/* Floating Movable AI Optical Proctor Camera */}
       {settings.enableWebcamProctor !== false && (
-        <div className="fixed bottom-6 right-6 z-40">
-          <WebcamProctor
-            isActive={!quizSubmittedRef.current}
-            onViolation={handleWebcamViolation}
-            candidateName={student?.name}
-          />
-        </div>
+        <WebcamProctor
+          isActive={!quizSubmittedRef.current}
+          onViolation={handleWebcamViolation}
+          candidateName={student?.name}
+        />
       )}
 
     </div>

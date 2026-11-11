@@ -35,20 +35,46 @@ export const StudentRegistration = ({ onRegisterStudent, availableQuestionsCount
   const [quizCodeNotice, setQuizCodeNotice] = useState('');
   const [quizCodeError, setQuizCodeError] = useState('');
 
-  // Check URL query param ?quizId=
+  // Check URL query param ?quizId= and cross-device ?d= payload
   React.useEffect(() => {
     try {
       const urlParams = new URLSearchParams(window.location.search);
       const qId = urlParams.get('quizId');
-      if (qId) {
-        const found = StorageService.getCustomQuizById(qId);
-        if (found) {
-          setAppliedQuiz(found);
-          setLanguage(found.language || 'CPP');
-          setDifficulty(found.difficulty || 'MIXED');
-        } else {
-          setQuizCodeError(`Assignment code "${qId}" was not found or has expired.`);
+      const encodedData = urlParams.get('d');
+      let found = qId ? StorageService.getCustomQuizById(qId) : null;
+
+      // Cross-device QR fallback: decode compact quiz config from URL
+      if (!found && encodedData) {
+        try {
+          const b64 = encodedData.replace(/-/g, '+').replace(/_/g, '/');
+          const bin = atob(b64);
+          const bytes = Uint8Array.from(bin, c => c.charCodeAt(0));
+          const jsonStr = new TextDecoder().decode(bytes);
+          const parsed = JSON.parse(jsonStr);
+          found = {
+            id: parsed.id || qId || 'AU-CUSTOM',
+            title: parsed.t || 'Department Assessment',
+            language: parsed.l || 'CPP',
+            difficulty: parsed.df || 'MIXED',
+            durationMinutes: parsed.du || 15,
+            passingPercentage: parsed.pp || 60,
+            enableWebcamProctor: parsed.wp !== 0,
+            strictAntiCheat: parsed.ac !== 0,
+            questionIds: parsed.qids || [],
+            customQuestions: parsed.cqs || [],
+            status: 'ACTIVE'
+          };
+        } catch (decodeErr) {
+          console.warn("Could not decode URL quiz payload", decodeErr);
         }
+      }
+
+      if (found) {
+        setAppliedQuiz(found);
+        setLanguage(found.language || 'CPP');
+        setDifficulty(found.difficulty || 'MIXED');
+      } else if (qId) {
+        setQuizCodeError(`Assignment code "${qId}" was not found or has expired.`);
       }
     } catch (e) {}
   }, []);

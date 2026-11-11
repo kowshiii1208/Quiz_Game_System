@@ -53,7 +53,13 @@ export function App() {
     // If attempting an official custom assigned quiz
     if (studentDetails.customQuiz) {
       const custom = studentDetails.customQuiz;
-      const allQuestions = StorageService.getQuestions();
+      const storedQuestions = StorageService.getQuestions();
+      const extraQuestions = Array.isArray(custom.customQuestions) ? custom.customQuestions : [];
+      const existingIds = new Set(storedQuestions.map(q => q.id));
+      const allQuestions = [
+        ...extraQuestions.filter(q => !existingIds.has(q.id)),
+        ...storedQuestions
+      ];
       let selected = [];
       if (custom.questionIds && custom.questionIds.length > 0) {
         const idSet = new Set(custom.questionIds);
