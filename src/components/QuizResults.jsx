@@ -13,14 +13,17 @@ import {
   HelpCircle,
   Sparkles,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Home,
+  ArrowLeft
 } from 'lucide-react';
 
 export const QuizResults = ({ 
   result, 
   onOpenCertificate, 
   onOpenLeaderboard, 
-  onRetake 
+  onRetake,
+  onGoHome 
 }) => {
   const {
     student,
@@ -55,7 +58,24 @@ export const QuizResults = ({
   };
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8 sm:py-12 space-y-8">
+    <div className="max-w-4xl mx-auto px-4 py-8 sm:py-12 space-y-6">
+      
+      {/* Top Navigation Bar: Back to Home Toggle */}
+      <div className="flex items-center justify-between">
+        <button
+          onClick={onGoHome || onRetake}
+          className="inline-flex items-center space-x-2 px-4 py-2.5 rounded-xl bg-slate-900/90 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-800 hover:border-slate-700 text-xs font-bold transition-all shadow-md group"
+          title="Return to Student Registration Home"
+        >
+          <ArrowLeft className="w-4 h-4 text-indigo-400 group-hover:-translate-x-1 transition-transform" />
+          <Home className="w-4 h-4 text-indigo-400" />
+          <span>Back to Home</span>
+        </button>
+
+        <span className="text-[11px] font-mono text-slate-500 hidden sm:inline">
+          Assessment Session Complete
+        </span>
+      </div>
       
       {/* Cheating Banner if Disqualified */}
       {cheatingDetected && (
@@ -204,6 +224,15 @@ export const QuizResults = ({
           >
             <RotateCcw className="w-4 h-4 text-slate-400" />
             <span>Retake Test</span>
+          </button>
+
+          <button
+            onClick={onGoHome || onRetake}
+            className="px-6 py-3.5 rounded-xl bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/40 text-xs sm:text-sm font-semibold flex items-center space-x-2 transition-all hover:scale-105"
+            title="Return to Student Registration Home"
+          >
+            <Home className="w-4 h-4 text-indigo-400" />
+            <span>Back to Home</span>
           </button>
 
         </div>

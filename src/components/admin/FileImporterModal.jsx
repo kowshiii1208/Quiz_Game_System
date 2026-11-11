@@ -167,7 +167,6 @@ export const FileImporterModal = ({ isOpen, onClose, onImportQuestions, existing
       setParsedQuestions(valid);
     }
   };
-
   const handleConfirmImport = () => {
     if (parsedQuestions.length === 0) return;
     onImportQuestions(parsedQuestions);
@@ -246,7 +245,7 @@ Explanation: C++ uses colon specifiers for inheritance.
   return (
     <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
       <div className="max-w-2xl w-full glass-panel rounded-3xl p-6 sm:p-8 border border-slate-800 shadow-2xl space-y-6 relative my-auto">
-        
+
         {/* Header */}
         <div className="flex items-center justify-between border-b border-slate-800 pb-4">
           <div className="flex items-center space-x-3">
@@ -323,7 +322,7 @@ Explanation: C++ uses colon specifiers for inheritance.
           <Upload className="w-10 h-10 text-indigo-400 mx-auto mb-2 animate-bounce" />
           <p className="text-sm font-bold text-white">Click or drag & drop question file here</p>
           <p className="text-xs text-slate-400 mt-1">Supports .pdf, .docx, .txt, .json, .csv files</p>
-          
+
           {selectedFile && (
             <div className="mt-4 inline-flex items-center space-x-2 px-3 py-1.5 rounded-xl bg-indigo-600/20 border border-indigo-500/40 text-indigo-300 text-xs font-bold">
               <FileText className="w-4 h-4 text-indigo-400" />

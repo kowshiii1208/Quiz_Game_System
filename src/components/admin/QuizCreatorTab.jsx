@@ -781,3 +781,4 @@ export const QuizCreatorTab = ({ questions = [], leaderboard = [] }) => {
     </div>
   );
 };
+

@@ -278,6 +278,7 @@ export function App() {
             onOpenCertificate={() => setShowCertificate(true)}
             onOpenLeaderboard={() => setShowLeaderboard(true)}
             onRetake={handleResetApp}
+            onGoHome={handleResetApp}
           />
         )}
       </main>

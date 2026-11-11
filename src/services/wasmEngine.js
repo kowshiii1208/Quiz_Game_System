@@ -96,3 +96,4 @@ export const WasmEngine = {
     return typeof WebAssembly !== 'undefined' && typeof WebAssembly.instantiate === 'function';
   }
 };
+

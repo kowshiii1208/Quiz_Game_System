@@ -199,3 +199,4 @@ export const WebcamProctor = ({ isActive = true, onViolation, candidateName = 'C
     </div>
   );
 };
+
